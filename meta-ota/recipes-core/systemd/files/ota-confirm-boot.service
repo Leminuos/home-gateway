@@ -1,0 +1,13 @@
+[Unit]
+Description=OTA Boot Confirmation
+After=local-fs.target
+Before=multi-user.target
+ConditionPathExists=/usr/bin/fw_setenv
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/ota-confirm-boot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

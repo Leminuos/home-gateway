@@ -1,0 +1,21 @@
+[Unit]
+Description=Smart Home Dashboard Qt Application
+After=multi-user.target
+
+[Service]
+Type=simple
+Environment=TSLIB_TSDEVICE=/dev/input/event0
+Environment=TSLIB_CONFFILE=/etc/ts.conf
+Environment=TSLIB_CALIBFILE=/etc/pointercal
+Environment=TSLIB_FBDEVICE=/dev/fb0
+Environment=MQTT_BROKER_HOST=192.168.137.1
+Environment=MQTT_BROKER_PORT=1883
+Environment=OTA_MANIFEST_URL=http://192.168.137.1:8000/manifest.json
+Environment=OTA_MQTT_TOPIC=ota/latest
+Environment=OTA_FORCE_UPDATE=1
+ExecStart=/usr/bin/home-gateway-app -platform linuxfb -plugin=tslib
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

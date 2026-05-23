@@ -1,0 +1,13 @@
+# Chọn install set theo slot đang chạy:
+#   đang chạy rootA (mmcblk0p1) → flash vào copy2 (mmcblk0p2 = rootB)
+#   đang chạy rootB (mmcblk0p2) → flash vào copy1 (mmcblk0p1 = rootA)
+rootfs=$(swupdate -g)
+
+if [ "$rootfs" = '/dev/mmcblk0p1' ]; then
+	selection="-e stable,copy2"
+else
+	selection="-e stable,copy1"
+fi
+
+SWUPDATE_ARGS="-H @BOARD_NAME@:@HW_REVISION@ ${selection} -f /etc/swupdate.cfg"
+SWUPDATE_WEBSERVER_ARGS="-document_root /www -port 8080"

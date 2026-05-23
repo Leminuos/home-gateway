@@ -1,0 +1,45 @@
+software =
+{
+    version     = "@VERSION@";
+    description = "Smart Home Gateway OTA update";
+
+    @BOARD_NAME@ = {
+        hardware-compatibility: [ "@HW_REVISION@" ];
+
+        stable: {
+            copy1: {
+                images: (
+                    {
+                        filename           = "@IMAGE_NAME@";
+                        device             = "/dev/mmcblk0p1";
+                        type               = "raw";
+                        compressed         = "zlib";
+                    }
+                );
+                scripts: (
+                    {
+                        filename = "switch-slot.sh";
+                        type     = "shellscript";
+                    }
+                );
+            };
+
+            copy2: {
+                images: (
+                    {
+                        filename           = "@IMAGE_NAME@";
+                        device             = "/dev/mmcblk0p2";
+                        type               = "raw";
+                        compressed         = "zlib";
+                    }
+                );
+                scripts: (
+                    {
+                        filename = "switch-slot.sh";
+                        type     = "shellscript";
+                    }
+                );
+            };
+        };
+    };
+}

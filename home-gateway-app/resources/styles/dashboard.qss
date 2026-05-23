@@ -1,0 +1,143 @@
+QWidget#Widget {
+    background-color: #F2F2F7;
+}
+
+/* ----- Header: ONLINE/OFFLINE + Clock ----- */
+QLabel#dotLabel {
+    font-size: 11px;
+    color: #8E8E93;
+}
+QLabel#dotLabel[state="online"]  { color: #34C759; }
+QLabel#dotLabel[state="offline"] { color: #8E8E93; }
+
+QLabel#onlineLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8E8E93;
+}
+QLabel#onlineLabel[state="online"]  { color: #34C759; }
+QLabel#onlineLabel[state="offline"] { color: #8E8E93; }
+
+QLabel#clockLabel {
+    color: #3C3C43;
+    font-size: 11px;
+}
+
+QFrame#headerSeparator {
+    color: #E5E5EA;
+    background-color: #E5E5EA;
+    border: none;
+}
+
+/* ----- Title row ----- */
+QLabel#dashboardLabel {
+    color: #1C1C1E;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+QLabel#timestampLabel {
+    color: #AEAEB2;
+    font-size: 9px;
+}
+
+/* ----- Sensor cards ----- */
+QFrame#tempCard,
+QFrame#humCard,
+QFrame#illCard {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-radius: 8px;
+}
+
+/* ----- Icon tiles (36x36 colored squares behind 32x32 PNG) ----- */
+QLabel#tempIcon {
+    background-color: #FFE5E7;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+QLabel#humIcon {
+    background-color: #E5F0FF;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+QLabel#illIcon {
+    background-color: #FFF6D6;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+/* ----- Card titles ----- */
+QLabel#tempTitle,
+QLabel#humTitle,
+QLabel#illTitle {
+    color: #8E8E93;
+    font-size: 9px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+/* ----- Card values ----- */
+QLabel#tempValue {
+    color: #FF3B30;
+    font-size: 20px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+QLabel#humValue {
+    color: #007AFF;
+    font-size: 20px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+QLabel#illValue {
+    color: #C9A227;
+    font-size: 20px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+/* ----- Card units ----- */
+QLabel#tempUnit,
+QLabel#humUnit,
+QLabel#illUnit {
+    color: #8E8E93;
+    font-size: 10px;
+    background: transparent;
+    border: none;
+}
+
+/* ----- Settings button ----- */
+QPushButton#settingsButton {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-radius: 10px;
+    color: #1C1C1E;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+QPushButton#settingsButton:hover {
+    background-color: #F2F2F7;
+    border: 1px solid #D1D1D6;
+}
+
+QPushButton#settingsButton:pressed {
+    background-color: #E5E5EA;
+    color: #007AFF;
+    border: 1px solid #C7C7CC;
+}
+
+QPushButton#settingsButton:focus {
+    outline: none;
+}

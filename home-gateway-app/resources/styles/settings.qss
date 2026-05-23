@@ -1,0 +1,256 @@
+QWidget#SettingsWidget {
+    background-color: #F2F2F7;
+}
+
+QWidget#scrollContents {
+    background-color: #F2F2F7;
+}
+
+QScrollArea#settingsScroll {
+    background: transparent;
+    border: none;
+}
+
+QScrollBar:vertical {
+    background: transparent;
+    width: 4px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: #C7C7CC;
+    border-radius: 2px;
+    min-height: 24px;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical,
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: none;
+    height: 0px;
+}
+
+/* ----- Title row ----- */
+QPushButton#backButton {
+    background: transparent;
+    border: none;
+    color: #1C1C1E;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 0px;
+    text-align: left;
+}
+
+QPushButton#backButton:pressed {
+    color: #007AFF;
+}
+
+QPushButton#backButton:focus {
+    outline: none;
+}
+
+/* ----- Common card frame ----- */
+QFrame#brightnessCard,
+QFrame#otaCard,
+QFrame#firmwareCard,
+QFrame#deviceCard {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-radius: 8px;
+}
+
+/* ----- Section titles inside cards ----- */
+QLabel#brightnessTitle,
+QLabel#otaTitle,
+QLabel#firmwareTitle,
+QLabel#deviceTitle {
+    color: #8E8E93;
+    font-size: 9px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+/* ----- Brightness card ----- */
+QLabel#brightnessValue {
+    color: #0E8A87;
+    font-size: 13px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+QSlider#brightnessSlider {
+    background: transparent;
+    min-height: 24px;
+}
+
+QSlider#brightnessSlider::groove:horizontal {
+    height: 6px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #DADCE0, stop:1 #E8EAED);
+    border: 1px solid #D1D1D6;
+    border-radius: 3px;
+}
+
+QSlider#brightnessSlider::sub-page:horizontal {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                stop:0 #15B7B2, stop:1 #0E8A87);
+    border: 1px solid #0A7370;
+    border-radius: 3px;
+}
+
+QSlider#brightnessSlider::add-page:horizontal {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #DADCE0, stop:1 #E8EAED);
+    border: 1px solid #D1D1D6;
+    border-radius: 3px;
+}
+
+QSlider#brightnessSlider::handle:horizontal {
+    background: qradialgradient(cx:0.5, cy:0.45, radius:0.55,
+                                stop:0 #FFFFFF, stop:0.85 #FFFFFF, stop:1 #B7E3E1);
+    border: 2px solid #0E8A87;
+    width: 18px;
+    height: 18px;
+    margin: -8px 0;
+    border-radius: 11px;
+}
+
+QSlider#brightnessSlider::handle:horizontal:hover {
+    border: 2px solid #0A7370;
+}
+
+QSlider#brightnessSlider::handle:horizontal:pressed {
+    background: #E0F4F2;
+    border: 2px solid #0A7370;
+}
+
+/* ----- OTA card ----- */
+QLabel#otaModeLabel {
+    color: #1C1C1E;
+    font-size: 15px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+QLabel#otaDescLabel {
+    color: #8E8E93;
+    font-size: 9px;
+    background: transparent;
+    border: none;
+}
+
+QCheckBox#otaToggle {
+    background: transparent;
+    spacing: 0px;
+}
+
+QCheckBox#otaToggle::indicator {
+    width: 50px;
+    height: 28px;
+    border-radius: 14px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #D1D1D6, stop:1 #E5E5EA);
+    border: 1px solid #B0B0B5;
+}
+
+QCheckBox#otaToggle::indicator:hover {
+    border: 1px solid #8E8E93;
+}
+
+QCheckBox#otaToggle::indicator:checked {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #15B7B2, stop:1 #0A7370);
+    border: 1px solid #096764;
+}
+
+QCheckBox#otaToggle::indicator:checked:hover {
+    border: 1px solid #074E4C;
+}
+
+/* ----- Firmware card ----- */
+QLabel#firmwareVersionLabel {
+    color: #1C1C1E;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+QLabel#firmwareVersionValue {
+    color: #0E8A87;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+    padding: 2px 8px;
+    background-color: #E0F4F2;
+    border-radius: 6px;
+}
+
+/* ----- Device card ----- */
+QLabel#deviceMacKey {
+    color: #1C1C1E;
+    font-size: 11px;
+    background: transparent;
+    border: none;
+}
+
+QLabel#deviceMacValue {
+    color: #1C1C1E;
+    font-size: 11px;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+}
+
+/* ----- Factory reset button (destructive) ----- */
+QPushButton#factoryResetButton {
+    background-color: #FFFFFF;
+    border: 1px solid #FFB3AB;
+    border-radius: 8px;
+    color: #FF3B30;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+QPushButton#factoryResetButton:pressed {
+    background-color: #FFE5E2;
+    border: 1px solid #FF3B30;
+}
+
+QPushButton#factoryResetButton:focus {
+    outline: none;
+}
+
+/* ----- Check for updates button (pinned bottom) ----- */
+QPushButton#checkUpdatesButton {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-radius: 10px;
+    color: #1C1C1E;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+QPushButton#checkUpdatesButton:hover {
+    background-color: #F2F2F7;
+    border: 1px solid #D1D1D6;
+}
+
+QPushButton#checkUpdatesButton:pressed {
+    background-color: #E5E5EA;
+    color: #007AFF;
+    border: 1px solid #C7C7CC;
+}
+
+QPushButton#checkUpdatesButton:focus {
+    outline: none;
+}

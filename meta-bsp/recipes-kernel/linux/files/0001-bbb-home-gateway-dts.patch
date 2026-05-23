@@ -1,0 +1,122 @@
+diff --git a/arch/arm/boot/dts/am335x-boneblack.dts b/arch/arm/boot/dts/am335x-boneblack.dts
+index db1bf9452e57..e613ff47cb07 100644
+--- a/arch/arm/boot/dts/am335x-boneblack.dts
++++ b/arch/arm/boot/dts/am335x-boneblack.dts
+@@ -168,3 +168,116 @@ &gpio3 {
+ 		"NC",
+ 		"NC";
+ };
++
++&am33xx_pinmux {
++	i2c1_pins: pinmux_i2c1_pins {
++		pinctrl-single,pins = <
++			AM33XX_PADCONF(AM335X_PIN_UART1_RXD, PIN_INPUT_PULLUP, MUX_MODE3)	/* I2C1_SDA */
++			AM33XX_PADCONF(AM335X_PIN_UART1_TXD, PIN_INPUT_PULLUP, MUX_MODE3)	/* I2C1_SCL */
++		>;
++	};
++
++	spi1_pins: pinmux_spi1_pins {
++		pinctrl-single,pins = <
++			AM33XX_PADCONF(AM335X_PIN_MCASP0_ACLKX, PIN_INPUT_PULLUP, MUX_MODE3)	/* SPI1_SCLK  -> P9_31 */
++			AM33XX_PADCONF(AM335X_PIN_MCASP0_FSX, PIN_INPUT_PULLUP, MUX_MODE3)		/* SPI1_D0/MISO -> P9_29 */
++			AM33XX_PADCONF(AM335X_PIN_MCASP0_AXR0, PIN_OUTPUT_PULLDOWN, MUX_MODE3)	/* SPI1_D1/MOSI -> P9_30 */
++			AM33XX_PADCONF(AM335X_PIN_MCASP0_AHCLKR, PIN_OUTPUT_PULLUP, MUX_MODE3)	/* SPI1_CS0   -> P9_28 */
++		>;
++	};
++
++	spi0_pins: pinmux_spi0_pins {
++		pinctrl-single,pins = <
++			AM33XX_PADCONF(AM335X_PIN_SPI0_SCLK, PIN_INPUT_PULLUP, MUX_MODE0)		/* SPI0_SCLK  -> P9_22 */
++			AM33XX_PADCONF(AM335X_PIN_SPI0_D0, PIN_INPUT_PULLUP, MUX_MODE0)			/* SPI0_D0/MISO -> P9_21 */
++			AM33XX_PADCONF(AM335X_PIN_SPI0_D1, PIN_OUTPUT_PULLDOWN, MUX_MODE0)		/* SPI0_D1/MOSI -> P9_18 */
++			AM33XX_PADCONF(AM335X_PIN_SPI0_CS0, PIN_OUTPUT_PULLUP, MUX_MODE0)		/* SPI0_CS0   -> P9_17 */
++		>;
++	};
++
++	ili_display_pins: pinmux_ili_display_pins {
++		pinctrl-single,pins = <
++			AM33XX_PADCONF(AM335X_PIN_MCASP0_FSR, PIN_OUTPUT_PULLUP, MUX_MODE7)		/* GPIO DC  -> P9_27 */
++			AM33XX_PADCONF(AM335X_PIN_MCASP0_AHCLKX, PIN_OUTPUT_PULLUP, MUX_MODE7)	/* GPIO RESET -> P9_25 */
++		>;
++	};
++
++	touch_pins: pinmux_touch_pins {
++		pinctrl-single,pins = <
++			AM33XX_PADCONF(AM335X_PIN_GPMC_BEN1, PIN_INPUT_PULLUP, MUX_MODE7)		/* T_INT -> P9_12 */
++		>;
++	};
++
++	dimmy_pins: pinmux_dimmy_pins {
++		pinctrl-single,pins = <
++			AM33XX_PADCONF(AM335X_PIN_GPMC_A2, PIN_OUTPUT, MUX_MODE6) 				/* LED -> P9_14 */
++		>;
++	};
++};
++
++&mcasp0 {
++	status = "disabled";
++};
++
++&i2c1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&i2c1_pins>;
++	status = "okay";
++};
++
++&spi1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&spi1_pins>;
++	status = "okay";
++
++	ili9341@0 {
++		compatible = "adafruit,yx240qv29", "ilitek,ili9341";
++		reg = <0>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&ili_display_pins>;
++		spi-max-frequency = <24000000>;
++		dc-gpios = <&gpio3 19 GPIO_ACTIVE_HIGH>;     /* lcd dc    P9.27 gpio3[19] */
++		reset-gpios = <&gpio3 21 GPIO_ACTIVE_HIGH>;  /* lcd reset P9.25 gpio3[21] */
++		rotation = <180>;
++		status = "okay";
++	};
++};
++
++&spi0 {
++	#address-cells = <1>;
++	#size-cells = <0>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&spi0_pins>;
++	status = "okay";
++
++	touchscreen@0 {
++		compatible = "ti,ads7846";
++		spi-max-frequency = <1000000>;
++		reg = <0>;
++		status = "okay";
++		pinctrl-names = "default";
++		pinctrl-0 = <&touch_pins>;
++		interrupts = <28 IRQ_TYPE_EDGE_FALLING>;
++		interrupt-parent = <&gpio1>;
++		pendown-gpio = <&gpio1 28 GPIO_ACTIVE_LOW>;
++
++		ti,x-min = /bits/ 16 <450>;
++		ti,y-min = /bits/ 16 <500>;
++		ti,x-max = /bits/ 16 <3450>;
++		ti,y-max = /bits/ 16 <3700>;
++		ti,x-plate-ohms = /bits/ 16 <100>;
++		ti,pressure-max = /bits/ 16 <255>;
++		touchscreen-inverted-x;
++		wakeup-source;
++	};
++};
++
++&epwmss1 {
++	status = "okay";
++};
++
++&ehrpwm1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&dimmy_pins>;
++	status = "okay";
++};
+\ No newline at end of file

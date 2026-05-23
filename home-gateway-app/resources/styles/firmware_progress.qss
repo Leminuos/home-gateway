@@ -1,0 +1,147 @@
+QWidget#FirmwareUpdateProgress {
+    background-color: #F2F2F7;
+}
+
+/* ----- Title section ----- */
+QLabel#updateBadge {
+    color: #8E8E93;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+QLabel#phaseTitle {
+    color: #1C1C1E;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+QLabel#phaseSubtitle {
+    color: #8E8E93;
+    font-size: 12px;
+}
+
+/* ----- Step icons ----- */
+QLabel#downloadIcon,
+QLabel#verifyIcon,
+QLabel#flashIcon,
+QLabel#rebootIcon {
+    min-width: 24px;
+    max-width: 24px;
+    min-height: 24px;
+    max-height: 24px;
+    border-radius: 8px;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+}
+
+QLabel#downloadIcon[state="pending"],
+QLabel#verifyIcon[state="pending"],
+QLabel#flashIcon[state="pending"],
+QLabel#rebootIcon[state="pending"] {
+    border: 2px solid #D1D1D6;
+    background: transparent;
+}
+
+QLabel#downloadIcon[state="active"],
+QLabel#verifyIcon[state="active"],
+QLabel#flashIcon[state="active"],
+QLabel#rebootIcon[state="active"] {
+    border: 2px solid #0E8A87;
+    background: transparent;
+}
+
+QLabel#downloadIcon[state="done"],
+QLabel#verifyIcon[state="done"],
+QLabel#flashIcon[state="done"],
+QLabel#rebootIcon[state="done"] {
+    border: 2px solid #2E8B47;
+    background-color: #2E8B47;
+}
+
+/* ----- Step name labels ----- */
+QLabel#downloadLabel,
+QLabel#verifyLabel,
+QLabel#flashLabel,
+QLabel#rebootLabel {
+    font-size: 14px;
+    background: transparent;
+    border: none;
+}
+
+QLabel#downloadLabel[state="pending"],
+QLabel#verifyLabel[state="pending"],
+QLabel#flashLabel[state="pending"],
+QLabel#rebootLabel[state="pending"] {
+    color: #B0B0B5;
+    font-weight: 500;
+}
+
+QLabel#downloadLabel[state="active"],
+QLabel#verifyLabel[state="active"],
+QLabel#flashLabel[state="active"],
+QLabel#rebootLabel[state="active"] {
+    color: #1C1C1E;
+    font-weight: 700;
+}
+
+QLabel#downloadLabel[state="done"],
+QLabel#verifyLabel[state="done"],
+QLabel#flashLabel[state="done"],
+QLabel#rebootLabel[state="done"] {
+    color: #1C1C1E;
+    font-weight: 600;
+}
+
+/* ----- Step percentage ----- */
+QLabel#downloadPercent,
+QLabel#verifyPercent,
+QLabel#flashPercent,
+QLabel#rebootPercent {
+    color: #0E8A87;
+    font-size: 13px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+}
+
+/* ----- Action button ----- */
+QPushButton#actionButton[variant="cancel"] {
+    background-color: #FFFFFF;
+    color: #1C1C1E;
+    border: 1px solid #E5E5EA;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 12px;
+}
+
+QPushButton#actionButton[variant="cancel"]:pressed {
+    background-color: #E5E5EA;
+}
+
+QPushButton#actionButton[variant="cancel"]:disabled {
+    color: #C7C7CC;
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5EA;
+}
+
+QPushButton#actionButton[variant="primary"] {
+    background-color: #2E8B47;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 12px;
+}
+
+QPushButton#actionButton[variant="primary"]:pressed {
+    background-color: #246E38;
+}
+
+QPushButton#actionButton:focus {
+    outline: none;
+}

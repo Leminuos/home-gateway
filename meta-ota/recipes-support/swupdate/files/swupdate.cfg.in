@@ -1,0 +1,30 @@
+/*
+ * SWUpdate runtime configuration template.
+ *
+ */
+
+globals :
+{
+    verbose  = true;
+    loglevel = 5;
+    syslog   = true;
+    reboot-required = false;
+};
+
+download :
+{
+    retries = 3;
+    timeout = 1800;
+};
+
+identify : (
+    { name = "board"; value = "@BOARD_NAME@"; }
+);
+
+webserver :
+{
+    document_root = "/www";
+    port          = 8080;
+    userid        = 0;
+    groupid       = 0;
+};

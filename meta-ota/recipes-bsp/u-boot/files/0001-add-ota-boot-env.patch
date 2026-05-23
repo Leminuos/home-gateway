@@ -1,0 +1,70 @@
+From: home-gateway-ota <noreply@local>
+Date: 2026-05-20
+Subject: [PATCH] am335x_evm: thêm logic OTA A/B + rollback vào built-in env
+
+Toàn bộ logic A/B (chọn slot, rollback theo boot_count, load kernel/dtb
+từ rootfs slot active qua ext4load) được bake thẳng vào CONFIG_EXTRA_ENV_SETTINGS.
+Không cần boot.scr rời nữa — file boot.cmd + mkimage step đã bỏ.
+
+Shared state (active_slot, ustate, boot_count, boot_limit) vẫn nằm ở
+U-Boot env raw offset 0x260000, ghi/đọc qua fw_setenv/fw_printenv từ userspace.
+
+Bốn biến script mới:
+  - ota_check_rollback: nếu ustate=1, tăng boot_count hoặc flip slot khi quá boot_limit
+  - ota_pick_slot:      map active_slot (A/B) → mmc_part (1/2)
+  - ota_load_kernel:    ext4load zImage + dtb từ rootfs slot active
+  - ota_boot:           orchestrator gọi 3 cái trên rồi bootz
+
+bootcmd được override (qua cfg fragment) thành "run ota_boot".
+
+diff --git a/include/configs/am335x_evm.h b/include/configs/am335x_evm.h
+index 7fb1b3a3e3f..b6e1a7c3aaa 100644
+--- a/include/configs/am335x_evm.h
++++ b/include/configs/am335x_evm.h
+@@ -152,6 +152,46 @@
+ 		"else " \
+ 			"setenv console ttyO0,115200n8;" \
+ 		"fi;\0" \
++	"boot_limit=3\0" \
++	"active_slot=A\0" \
++	"boot_count=0\0" \
++	"ustate=0\0" \
++	"kernel_image=/boot/zImage\0" \
++	"fdtfile=/boot/am335x-boneblack.dtb\0" \
++	"ota_check_rollback=" \
++		"if test \"${ustate}\" = \"1\"; then " \
++			"if test ${boot_count} -ge ${boot_limit}; then " \
++				"echo OTA: Boot failed 3 times -> rolling back; " \
++				"if test \"${active_slot}\" = \"A\"; then " \
++					"setenv active_slot B; " \
++				"else " \
++					"setenv active_slot A; " \
++				"fi; " \
++				"setenv ustate 0; " \
++				"setenv boot_count 0; " \
++				"saveenv; " \
++			"else " \
++				"setexpr boot_count ${boot_count} + 1; " \
++				"saveenv; " \
++				"echo OTA: upgrade boot attempt ${boot_count}/${boot_limit}; " \
++			"fi; " \
++		"fi\0" \
++	"ota_pick_slot=" \
++		"if test \"${active_slot}\" = \"A\"; then " \
++			"setenv mmc_part 1; " \
++		"else " \
++			"setenv mmc_part 2; " \
++		"fi\0" \
++	"ota_load_kernel=" \
++		"echo OTA: loading kernel from slot ${active_slot} (mmcblk0p${mmc_part}); " \
++		"ext4load mmc 0:${mmc_part} ${kernel_addr_r} ${kernel_image}; " \
++		"ext4load mmc 0:${mmc_part} ${fdt_addr_r} ${fdtfile}\0" \
++	"ota_boot=" \
++		"run ota_check_rollback; " \
++		"run ota_pick_slot; " \
++		"setenv bootargs root=/dev/mmcblk0p${mmc_part} rw rootwait console=ttyO0,115200n8 panic=10; " \
++		"run ota_load_kernel; " \
++		"bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
+ 	NANDARGS \
+ 	NETARGS \
+ 	DFUARGS \
