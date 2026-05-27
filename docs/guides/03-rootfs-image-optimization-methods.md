@@ -308,123 +308,94 @@ Phát hiện file/thư mục lạ trên rootfs
 
 ### 5.1. Tìm package nào chứa file cụ thể
 
-Trên board phát hiện thấy `/usr/share/gir-1.0` chiếm dung lượng -> File này thuộc package nào?
+Trên board phát hiện thấy `/usr/lib/libpython3.10.so.1.0` chiếm dung lượng -> Làm thế nào để biết file này thuộc package nào?
 
 ```bash
-# Trên build host:
-oe-pkgdata-util find-path /usr/share/gir-1.0
-# Output: gobject-introspection
-
-oe-pkgdata-util find-path /usr/lib/libQt5XcbQpa.so.5
-# Output: qtbase-plugins
+oe-pkgdata-util find-path /usr/lib/libpython3.10.so.1.0
+# Output: libpython3
 ```
 
 `oe-pkgdata-util` tra cứu package database của Yocto — ánh xạ từ đường dẫn file trên rootfs sang tên package.
 
-### 5.2. Tìm package nào kéo một package vào image
+### 5.2. Từ package tìm ra recipe nào build ra nó
 
-Biết `python3` không nên có trên image, nhưng nó vẫn bị cài. Ai kéo nó?
+Ví dụ với package `libpython3`:
 
 ```bash
-# Cách 1: dùng oe-pkgdata-util
-oe-pkgdata-util lookup-recipe python3
-# → cho biết recipe nào tạo ra package python3
+oe-pkgdata-util lookup-recipe libpython3
+# Output: python3
+```
 
-# Cách 2: dùng bitbake dependency graph
+Sau đó tìm file recipe:
+
+```bash
+bitbake-layers show-recipes -f python3
+
+# Hoặc
+
+bitbake -e python3 | grep "^FILE="
+
+# Output: /home/user/yocto/poky/meta/recipes-devtools/python/python3_3.10.19.bb
+```
+
+### 5.2. Xem package được kéo vào image bằng cách nào (dependency chain)
+
+Các package thuộc recipe `python3` không nên có trong image, nhưng nó vẫn bị cài vào -> Nó được kéo vào image bằng cách nào?
+
+Sử dụng bitbake dependency graph:
+
+```bash
 bitbake -g <image-name>
-# Tạo ra file: task-depends.dot
+```
 
-# Tìm ai phụ thuộc python3:
-grep "python3" task-depends.dot | head -20
+Khi thực hiện lệnh này, nó sẽ tạo ra hai file ở thư mục build:
 
-# Cách 3: tìm RDEPENDS (runtime dependency) cụ thể
-grep -r "RDEPENDS.*python3" tmp/pkgdata/*/runtime/
-# → cho biết package nào khai báo python3 là dependency
+```
+task-depends.dot
+pn-buildlist
+```
 
-# Cách 4: dùng depexp (dependency explorer) nếu đã build
-bitbake -u depexp <image-name>
-# Mở GUI hiển thị dependency tree
+Dùng `oe-depends-dot` - đây là một script có sẵn trong poky giúp tìm các recipe phụ thuộc vào `python3`:
+
+```bash
+oe-depends-dot -k libpython3 -w task-depends.dot
+```
+
+-> Output:
+
+```bash
+Because: bluez5 btrfs-tools core-image-smartfarm coreutils glib-2 gobject-introspection libxml2 nfs-utils opkg-utils python3-dbus python3-packaging python3-pycairo python3-pygobject python3-pyparsing
+core-image-smartfarm -> bluez5 -> python3-dbus -> glib-2 -> python3
+core-image-smartfarm -> bluez5 -> python3-dbus -> glib-2 -> coreutils -> opkg-utils -> python3
+core-image-smartfarm -> bluez5 -> python3-pygobject -> gobject-introspection -> glib-2 -> coreutils -> opkg-utils -> python3
+core-image-smartfarm -> btrfs-tools -> python3
+core-image-smartfarm -> libxml2 -> python3
+core-image-smartfarm -> nfs-utils -> python3
+core-image-smartfarm -> python3-packaging -> python3-pyparsing -> python3
+core-image-smartfarm -> python3-pygobject -> python3-pycairo -> python3
 ```
 
 ### 5.3. Xem PACKAGECONFIG của một package
 
-Package lớn (Qt, systemd, gstreamer) có nhiều feature tùy chọn được kiểm soát bởi `PACKAGECONFIG`. Xem config hiện tại:
+Nhiều recipe dùng `PACKAGECONFIG` để bật/tắt tính năng dựa trên `DISTRO_FEATURES`.
 
 ```bash
-# Xem PACKAGECONFIG đang active cho qtbase:
-bitbake -e qtbase | grep ^PACKAGECONFIG=
-
-# Output ví dụ:
-# PACKAGECONFIG="accessibility dbus fontconfig freetype glib gui
-#   harfbuzz icu jpeg libinput libpng opengl openssl sql-sqlite
-#   tslib udev widgets xcb xkbcommon xlib xrender"
-
-# Xem tất cả PACKAGECONFIG có thể (kể cả đang tắt):
-bitbake -e qtbase | grep ^PACKAGECONFIG
+bitbake -e systemd | grep "^FILE="
+# FILE="/home/.../yocto/poky/meta/recipes-core/systemd/systemd_250.14.bb"
 ```
 
-Từ output trên, xác định feature nào cần bỏ:
+Mở file `/home/.../yocto/poky/meta/recipes-core/systemd/systemd_250.14.bb`, ta thấy có một đoạn như sau:
 
-```bitbake
-# Trong local.conf hoặc bbappend:
-PACKAGECONFIG:remove:pn-qtbase = "xcb opengl x11 tslib sql-sqlite"
-PACKAGECONFIG:append:pn-qtbase = " linuxfb"
+```
+PACKAGECONFIG ??= " \
+    ${@bb.utils.filter('DISTRO_FEATURES', 'acl audit efi ldconfig pam selinux smack usrmerge polkit seccomp', d)} \
+    ... \
+"
+
+PACKAGECONFIG[acl] = "-Dacl=true,-Dacl=false,acl"
 ```
 
-Một số package phổ biến có PACKAGECONFIG đáng kiểm tra:
-
-```bash
-bitbake -e systemd | grep ^PACKAGECONFIG=
-bitbake -e gstreamer1.0 | grep ^PACKAGECONFIG=
-bitbake -e curl | grep ^PACKAGECONFIG=
-bitbake -e openssh | grep ^PACKAGECONFIG=
-```
-
-### 5.4. Xem dependency tree đầy đủ của image
-
-```bash
-# Tạo dependency graph
-bitbake -g <image-name>
-
-# File output:
-#   task-depends.dot    — đầy đủ nhất, bao gồm task-level dependency
-#   recipe-depends.dot  — recipe-level dependency (dễ đọc hơn)
-
-# Tìm chain: ai kéo python3 vào?
-# Đọc recipe-depends.dot, tìm ngược từ python3:
-grep '"python3"' recipe-depends.dot
-# Output:
-# "gobject-introspection" -> "python3"
-# Tiếp tục tìm:
-grep '"gobject-introspection"' recipe-depends.dot
-# "glib-2.0" -> "gobject-introspection"
-```
-
-Cách đọc: `"A" -> "B"` nghĩa là A phụ thuộc B. Tìm ngược từ package
-muốn loại → biết chain → cắt ở gốc (loại DISTRO_FEATURES hoặc
-PACKAGECONFIG) thay vì cắt ở ngọn.
-
-### 5.5. So sánh manifest trước và sau
-
-```bash
-# Lưu manifest trước khi thay đổi
-cp tmp/deploy/images/<machine>/<image>*.manifest /tmp/before.manifest
-
-# Build lại sau thay đổi
-bitbake <image-name>
-
-# So sánh
-diff /tmp/before.manifest tmp/deploy/images/<machine>/<image>*.manifest
-
-# Hoặc xem chi tiết hơn:
-comm -23 <(sort /tmp/before.manifest) \
-         <(sort tmp/deploy/images/<machine>/<image>*.manifest)
-# → packages có trong bản cũ mà không có trong bản mới (đã bị loại)
-
-comm -13 <(sort /tmp/before.manifest) \
-         <(sort tmp/deploy/images/<machine>/<image>*.manifest)
-# → packages mới xuất hiện (nếu có)
-```
+Điều này có nghĩa là: Nếu `DISTRO_FEATURES` chứa `acl` -> `systemd` bật `acl` -> kéo các package liên quan đến `acl` vào build.
 
 ---
 
