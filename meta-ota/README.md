@@ -105,6 +105,7 @@ fw_setenv ustate 0                                     # sửa thủ công (debu
 | Đổi port web / log SWUpdate | [`swupdate.cfg.in`](recipes-support/swupdate/files/swupdate.cfg.in) |
 | Bật signing / encryption | [`defconfig`](recipes-support/swupdate/files/defconfig) |
 | Bump version OTA | [`conf/ota-version.inc`](conf/ota-version.inc) |
+| Bật/tắt read-only rootfs | `IMAGE_FEATURES` trong [`core-image-home-gateway.bbappend`](recipes-core/images/core-image-home-gateway.bbappend) và flag `ro`/`rw` trong [`0001-add-ota-boot-env.patch`](recipes-bsp/u-boot/files/0001-add-ota-boot-env.patch) (phải khớp!) |
 
 ---
 

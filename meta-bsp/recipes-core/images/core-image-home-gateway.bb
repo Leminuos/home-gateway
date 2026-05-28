@@ -25,6 +25,9 @@ DEV_PACKAGES = " \
     systemd-analyze \
     tslib tslib-calibrate tslib-tests \
     mosquitto-clients \
+    inotify-tools \
+    strace \
+    lsof \
 "
 
 DEVELOPMENT_BUILD ?= "0"

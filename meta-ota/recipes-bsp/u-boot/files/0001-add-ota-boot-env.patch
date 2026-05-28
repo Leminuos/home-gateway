@@ -62,7 +62,7 @@ index 7fb1b3a3e3f..b6e1a7c3aaa 100644
 +	"ota_boot=" \
 +		"run ota_check_rollback; " \
 +		"run ota_pick_slot; " \
-+		"setenv bootargs root=/dev/mmcblk0p${mmc_part} rw rootwait console=ttyO0,115200n8 panic=10; " \
++		"setenv bootargs root=/dev/mmcblk0p${mmc_part} ro rootwait console=ttyO0,115200n8 panic=10; " \
 +		"run ota_load_kernel; " \
 +		"bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
  	NANDARGS \
