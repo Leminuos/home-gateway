@@ -1,0 +1,52 @@
+From: home-gateway-ota <noreply@local>
+Date: 2026-06-07
+Subject: am335x_evm: Thêm logic OTA A/B + rollback vào built-in env
+diff --git a/include/configs/am335x_evm.h b/include/configs/am335x_evm.h
+index 7fb1b3a3e3f..c3a1d9fe2bb 100644
+--- a/include/configs/am335x_evm.h
++++ b/include/configs/am335x_evm.h
+@@ -152,6 +152,44 @@
+ 		"else " \
+ 			"setenv console ttyO0,115200n8;" \
+ 		"fi;\0" \
++	"boot_limit=3\0" \
++	"active_slot=A\0" \
++	"boot_count=0\0" \
++	"ustate=0\0" \
++	"fit_image=/boot/fitImage\0" \
++	"ota_check_rollback=" \
++		"if test \"${ustate}\" = \"1\"; then " \
++			"if test ${boot_count} -ge ${boot_limit}; then " \
++				"echo OTA: Boot failed 3 times -> rolling back; " \
++				"if test \"${active_slot}\" = \"A\"; then " \
++					"setenv active_slot B; " \
++				"else " \
++					"setenv active_slot A; " \
++				"fi; " \
++				"setenv ustate 0; " \
++				"setenv boot_count 0; " \
++				"saveenv; " \
++			"else " \
++				"setexpr boot_count ${boot_count} + 1; " \
++				"saveenv; " \
++				"echo OTA: upgrade boot attempt ${boot_count}/${boot_limit}; " \
++			"fi; " \
++		"fi\0" \
++	"ota_pick_slot=" \
++		"if test \"${active_slot}\" = \"A\"; then " \
++			"setenv mmc_part 1; " \
++		"else " \
++			"setenv mmc_part 2; " \
++		"fi\0" \
++	"ota_load_kernel=" \
++		"echo OTA: loading fitImage from slot ${active_slot} (mmcblk0p${mmc_part}); " \
++		"ext4load mmc 0:${mmc_part} ${kernel_addr_r} ${fit_image}\0" \
++	"ota_boot=" \
++		"run ota_check_rollback; " \
++		"run ota_pick_slot; " \
++		"setenv bootargs root=/dev/mmcblk0p${mmc_part} ro rootwait console=ttyO0,115200n8 panic=10; " \
++		"run ota_load_kernel; " \
++		"bootm ${kernel_addr_r}#conf-am335x-boneblack.dtb\0" \
+ 	NANDARGS \
+ 	NETARGS \
+ 	DFUARGS \

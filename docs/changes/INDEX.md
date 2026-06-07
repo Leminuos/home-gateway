@@ -12,15 +12,19 @@ Log các thay đổi lớn kèm giải thích ("cái gì đã thay đổi và v�
 | [0004-pwm-backlight-control.md](0004-pwm-backlight-control.md) | Qt app — điều khiển backlight TFT qua PWM |
 | [0005-ota-pull-model-host-server.md](0005-ota-pull-model-host-server.md) | Thay đổi cơ chế update OTA |
 | [0006-read-only-rootfs.md](0006-read-only-rootfs.md) | Rootfs slot A/B mount read-only |
+| [0007-uboot-verified-boot.md](0007-uboot-verified-boot.md) | U-Boot Verified Boot: FIT image + RSA2048, feature `secure-boot` bật/tắt qua DISTRO_FEATURES |
+| [0008-fix-fitimage-dtb-config.md](0008-fix-fitimage-dtb-config.md) | Fix FIT image dùng sai DTB |
 
 ## Phân nhóm theo chủ đề
 
-### Image / OTA
+### Image / OTA / Bảo mật
 
 - [0001-optimize-image.md](0001-optimize-image.md)
 - [0002-kernel-dtb-ab-via-ext4load.md](0002-kernel-dtb-ab-via-ext4load.md)
 - [0005-ota-pull-model-host-server.md](0005-ota-pull-model-host-server.md)
 - [0006-read-only-rootfs.md](0006-read-only-rootfs.md)
+- [0007-uboot-verified-boot.md](0007-uboot-verified-boot.md)
+- [0008-fix-fitimage-dtb-config.md](0008-fix-fitimage-dtb-config.md)
 
 ### MQTT / kết nối mạng
 

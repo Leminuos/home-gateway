@@ -1,24 +1,8 @@
 From: home-gateway-ota <noreply@local>
-Date: 2026-05-20
-Subject: [PATCH] am335x_evm: thêm logic OTA A/B + rollback vào built-in env
-
-Toàn bộ logic A/B (chọn slot, rollback theo boot_count, load kernel/dtb
-từ rootfs slot active qua ext4load) được bake thẳng vào CONFIG_EXTRA_ENV_SETTINGS.
-Không cần boot.scr rời nữa — file boot.cmd + mkimage step đã bỏ.
-
-Shared state (active_slot, ustate, boot_count, boot_limit) vẫn nằm ở
-U-Boot env raw offset 0x260000, ghi/đọc qua fw_setenv/fw_printenv từ userspace.
-
-Bốn biến script mới:
-  - ota_check_rollback: nếu ustate=1, tăng boot_count hoặc flip slot khi quá boot_limit
-  - ota_pick_slot:      map active_slot (A/B) → mmc_part (1/2)
-  - ota_load_kernel:    ext4load zImage + dtb từ rootfs slot active
-  - ota_boot:           orchestrator gọi 3 cái trên rồi bootz
-
-bootcmd được override (qua cfg fragment) thành "run ota_boot".
-
+Date: 2026-06-07
+Subject: am335x_evm: Thêm logic OTA A/B + rollback vào built-in env
 diff --git a/include/configs/am335x_evm.h b/include/configs/am335x_evm.h
-index 7fb1b3a3e3f..b6e1a7c3aaa 100644
+index 7fb1b3a3e3f..c3a1d9fe2bb 100644
 --- a/include/configs/am335x_evm.h
 +++ b/include/configs/am335x_evm.h
 @@ -152,6 +152,46 @@

@@ -3,7 +3,12 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append = " \
     file://u-boot-ota-env.txt \
     file://0001-bbb-ota.cfg \
-    file://0001-add-ota-boot-env.patch \
+"
+
+SRC_URI:append = " \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'secure-boot', \
+       'file://0001-bbb-ota-secure-boot.patch', \
+       'file://0001-bbb-ota-normal-boot.patch', d)} \
 "
 
 # u-boot-tools-native cung cấp mkenvimage để build u-boot-env.raw
