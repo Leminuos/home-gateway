@@ -1,4 +1,5 @@
 #include "ota/OtaManager.h"
+#include "ota/MqttSettings.h"
 #include "ui/FirmwareUpdatePopup.h"
 #include "ui/FirmwareUpdateProgress.h"
 #include "ui/MainDashboard.h"
@@ -148,14 +149,13 @@ int main(int argc, char *argv[])
     stack->setCurrentIndex(dashboardIndex);
     root.show();
 
-    dashboard->init();
+    MqttSettings mqttCfg;
+    mqttCfg.load();
+    const QString mqttHost = mqttCfg.host();
+    const int mqttPort = mqttCfg.port();
 
-    // OtaManager dùng chung broker với sensor (cùng env).
-    bool portOk = false;
-    const QString brokerHost = qEnvironmentVariable("MQTT_BROKER_HOST", QStringLiteral("127.0.0.1"));
-    int brokerPort = qEnvironmentVariableIntValue("MQTT_BROKER_PORT", &portOk);
-    if (!portOk || brokerPort <= 0) brokerPort = 1883;
-    ota->start(brokerHost, brokerPort);
+    dashboard->init(mqttHost, mqttPort);
+    ota->start(mqttHost, mqttPort);
 
     return a.exec();
 }

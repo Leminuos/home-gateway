@@ -24,7 +24,7 @@ Widget::~Widget()
     delete ui;
 }
 
-int Widget::init()
+int Widget::init(const QString &mqttHost, int mqttPort)
 {
     int ret;
 
@@ -96,11 +96,7 @@ int Widget::init()
 
     mReadSensorDataTimer.start(3000);
 
-    bool portOk = false;
-    const QString brokerHost = qEnvironmentVariable("MQTT_BROKER_HOST", QStringLiteral("127.0.0.1"));
-    int brokerPort = qEnvironmentVariableIntValue("MQTT_BROKER_PORT", &portOk);
-    if (!portOk || brokerPort <= 0) brokerPort = 1883;
-    client.connectToHost(brokerHost, brokerPort, 60);
+    client.connectToHost(mqttHost, mqttPort, 60);
     
     return 0;
 }

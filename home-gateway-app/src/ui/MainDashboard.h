@@ -22,7 +22,7 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
-    int init();
+    int init(const QString &mqttHost, int mqttPort);
     void deinit();
 
 signals:

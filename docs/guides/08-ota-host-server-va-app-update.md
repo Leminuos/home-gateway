@@ -27,8 +27,7 @@ HOST (192.168.137.1)                          BBB
 
 ### 2.1. MQTT broker
 
-Broker mosquitto phải chạy trên host (cho mode auto) — xem guide [MQTT broker trên host](04-mqtt-broker-tren-host.md). Cần cả
-`mosquitto-clients` để có `mosquitto_pub`:
+Broker mosquitto phải chạy trên host (cho mode auto) — xem guide [MQTT broker trên host](04-mqtt-broker-tren-host.md). Cần cả `mosquitto-clients` để có `mosquitto_pub`:
 
 ```bash
 sudo apt install mosquitto mosquitto-clients

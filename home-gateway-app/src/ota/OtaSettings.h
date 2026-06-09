@@ -4,8 +4,8 @@
 #include <QJsonObject>
 #include <QString>
 
-// Config OTA do user chỉnh (auto/manual), lưu JSON ở /data — giữ qua OTA + reboot.
-// JSON object để dễ thêm field sau. Lỗi I/O xử lý mềm (default / trả false).
+// Config OTA lưu tại /data/config/ota.json — tồn tại qua OTA + reboot.
+// Chứa các tuỳ chọn liên quan đến luồng OTA (không bao gồm thông số kết nối MQTT).
 class OtaSettings
 {
 public:
@@ -14,8 +14,20 @@ public:
     void load();          // thiếu/hỏng -> giữ default
     bool save() const;    // tạo thư mục nếu cần; false nếu lỗi
 
-    bool autoMode() const;          // default: false (Manual)
+    bool autoMode() const;
     void setAutoMode(bool autoMode);
+
+    QString manifestUrl() const;
+    void setManifestUrl(const QString &url);
+
+    QString mqttTopic() const;
+    void setMqttTopic(const QString &topic);
+
+    bool forceUpdate() const;
+    void setForceUpdate(bool force);
+
+    int pollingIntervalSec() const;  // 0 = tắt polling
+    void setPollingIntervalSec(int sec);
 
 private:
     QString mPath;

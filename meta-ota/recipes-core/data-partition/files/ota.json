@@ -1,0 +1,7 @@
+{
+  "auto-mode": false,
+  "manifest-url": "http://192.168.137.10:8000/manifest.json",
+  "mqtt-topic": "ota/latest",
+  "force-update": false,
+  "polling-interval-sec": 60
+}

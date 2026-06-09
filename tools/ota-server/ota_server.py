@@ -23,7 +23,7 @@ _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))   # tools/ota-server
 _REPO_ROOT = os.path.dirname(os.path.dirname(_SCRIPT_DIR))  # gốc repo
 
 # ============================= CONFIG ========================================
-HOST_IP        = "192.168.137.1"   # IP của host (nhúng vào url manifest)
+HOST_IP        = "192.168.137.10"  # IP của host (nhúng vào url manifest)
 HTTP_PORT      = 8000
 RELEASE_DIR    = os.path.join(_REPO_ROOT, "release")  # nơi đặt file .swu
 MQTT_BROKER    = "127.0.0.1"

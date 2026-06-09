@@ -3,21 +3,10 @@
 
 #include <QString>
 
-// Cấu hình OTA — đọc từ env (set trong home-dashboard.service), có default để dev.
+// Đường dẫn file và URL cố định của hệ thống — không do user cấu hình.
+// Thông số do user cấu hình (mqttTopic, forceUpdate, polling…) nằm trong OtaSettings.
+// Thông số kết nối MQTT (host, port) nằm trong MqttSettings.
 namespace OtaConfig {
-
-// manifest.json — dùng cho mode manual (HTTP GET)
-inline QString manifestUrl()
-{
-    return qEnvironmentVariable("OTA_MANIFEST_URL",
-                                QStringLiteral("http://192.168.137.1:8000/manifest.json"));
-}
-
-// topic retained host publish version mới — dùng cho mode auto
-inline QString mqttTopic()
-{
-    return qEnvironmentVariable("OTA_MQTT_TOPIC", QStringLiteral("ota/latest"));
-}
 
 // webserver của SWUpdate daemon trên BBB — app POST .swu vào đây để flash
 inline QString swupdateUploadUrl()
@@ -44,19 +33,16 @@ inline QString downloadPath()
     return qEnvironmentVariable("OTA_DOWNLOAD_PATH", QStringLiteral("/tmp/home-gateway-update.swu"));
 }
 
-// Config user (auto/manual) — đặt ở /data để giữ nguyên qua OTA + reboot.
+// /data/config/ota.json — config OTA do user chỉnh, tồn tại qua OTA + reboot
 inline QString configFile()
 {
-    return qEnvironmentVariable("OTA_CONFIG_FILE", QStringLiteral("/data/ota/config.json"));
+    return qEnvironmentVariable("OTA_CONFIG_FILE", QStringLiteral("/data/config/ota.json"));
 }
 
-// TEST mode: bỏ qua so sánh version — coi mọi manifest hợp lệ là "có bản mới".
-// Bật bằng env OTA_FORCE_UPDATE=1 để test lặp lại cùng 1 .swu không cần bump
-// version; bỏ env (hoặc =0) là về hành vi bình thường.
-inline bool forceUpdate()
+// /data/config/mqtt.json — thông số kết nối MQTT broker
+inline QString mqttConfigFile()
 {
-    const QString v = qEnvironmentVariable("OTA_FORCE_UPDATE").trimmed().toLower();
-    return v == QStringLiteral("1") || v == QStringLiteral("true") || v == QStringLiteral("yes");
+    return qEnvironmentVariable("MQTT_CONFIG_FILE", QStringLiteral("/data/config/mqtt.json"));
 }
 
 } // namespace OtaConfig

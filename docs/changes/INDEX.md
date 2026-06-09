@@ -14,6 +14,9 @@ Log các thay đổi lớn kèm giải thích ("cái gì đã thay đổi và v�
 | [0006-read-only-rootfs.md](0006-read-only-rootfs.md) | Rootfs slot A/B mount read-only |
 | [0007-uboot-verified-boot.md](0007-uboot-verified-boot.md) | U-Boot Verified Boot: FIT image + RSA2048, feature `secure-boot` bật/tắt qua DISTRO_FEATURES |
 | [0008-fix-fitimage-dtb-config.md](0008-fix-fitimage-dtb-config.md) | Fix FIT image dùng sai DTB |
+| [0009-runtime-config-to-json.md](0009-runtime-config-to-json.md) | Chuyển env var sang JSON config file trên /data; thêm MqttSettings, mở rộng OtaSettings, auto-polling; sửa IP sang Ubuntu VM 192.168.137.10 |
+| [0010-data-partition-build-time.md](0010-data-partition-build-time.md) | Build /data partition ext4 tại build time bằng mke2fs -d, nhúng config sẵn + data.mount unit |
+| [0011-app-settings-json.md](0011-app-settings-json.md) | Thêm setting.json + class AppSettings lưu cấu hình home-dashboard (độ sáng), tồn tại qua reboot/OTA |
 
 ## Phân nhóm theo chủ đề
 
@@ -26,11 +29,14 @@ Log các thay đổi lớn kèm giải thích ("cái gì đã thay đổi và v�
 - [0007-uboot-verified-boot.md](0007-uboot-verified-boot.md)
 - [0008-fix-fitimage-dtb-config.md](0008-fix-fitimage-dtb-config.md)
 
-### MQTT / kết nối mạng
+### MQTT / kết nối mạng / config
 
 - [0003-mqtt-broker-tren-host.md](0003-mqtt-broker-tren-host.md)
+- [0009-runtime-config-to-json.md](0009-runtime-config-to-json.md)
+- [0010-data-partition-build-time.md](0010-data-partition-build-time.md)
 
 ### Qt application
 
 - [0004-pwm-backlight-control.md](0004-pwm-backlight-control.md)
 - [0005-ota-pull-model-host-server.md](0005-ota-pull-model-host-server.md)
+- [0011-app-settings-json.md](0011-app-settings-json.md)

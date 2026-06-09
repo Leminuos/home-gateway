@@ -23,6 +23,7 @@ OtaManager::OtaManager(QObject *parent)
     , mUploadReply(nullptr)
     , mEnteredFlash(false)
     , mInstallConcluded(false)
+    , mManifestFromUser(true)
 {
     connect(&mMqtt, &MqttClient::connected, this, &OtaManager::onMqttConnected);
     connect(&mMqtt, &MqttClient::messageReceived, this, &OtaManager::onMqttMessage);
@@ -41,6 +42,10 @@ OtaManager::OtaManager(QObject *parent)
 
     mUstatePoller.setInterval(2000);
     connect(&mUstatePoller, &QTimer::timeout, this, &OtaManager::pollUstate);
+
+    connect(&mAutoPoller, &QTimer::timeout, this, [this]() {
+        checkForUpdate(false);
+    });
 }
 
 OtaManager::~OtaManager() = default;
@@ -60,6 +65,14 @@ void OtaManager::start(const QString &brokerHost, int brokerPort)
     emit currentVersionChanged(mCurrentVersion);
 
     mMqtt.connectToHost(brokerHost, brokerPort, 60);
+
+    if (mAutoMode) {
+        const int interval = mSettings.pollingIntervalSec();
+        if (interval > 0) {
+            mAutoPoller.setInterval(interval * 1000);
+            mAutoPoller.start();
+        }
+    }
 }
 
 QString OtaManager::readCurrentVersion() const
@@ -91,24 +104,24 @@ QString OtaManager::readCurrentVersion() const
 
 void OtaManager::onMqttConnected()
 {
-    // Topic retained -> message version mới nhất được gửi ngay khi subscribe.
-    mMqtt.subscribeTopic(OtaConfig::mqttTopic(), 1);
+    mMqtt.subscribeTopic(mSettings.mqttTopic(), 1);
 }
 
 void OtaManager::onMqttMessage(const QString &topic, const QByteArray &payload)
 {
-    if (topic != OtaConfig::mqttTopic()) {
+    if (topic != mSettings.mqttTopic()) {
         return;
     }
     evaluateManifest(FirmwareManifest::fromJson(payload), /*fromManualCheck=*/false);
 }
 
-void OtaManager::checkForUpdate()
+void OtaManager::checkForUpdate(bool fromUser)
 {
     if (mManifestReply) {
-        return; // đang check
+        return;
     }
-    mManifestReply = mNet->get(QNetworkRequest(QUrl(OtaConfig::manifestUrl())));
+    mManifestFromUser = fromUser;
+    mManifestReply = mNet->get(QNetworkRequest(QUrl(mSettings.manifestUrl())));
     connect(mManifestReply, &QNetworkReply::finished, this, &OtaManager::onManifestFinished);
 }
 
@@ -122,10 +135,12 @@ void OtaManager::onManifestFinished()
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-        emit checkFailed(reply->errorString());
+        if (mManifestFromUser) {
+            emit checkFailed(reply->errorString());
+        }
         return;
     }
-    evaluateManifest(FirmwareManifest::fromJson(reply->readAll()), /*fromManualCheck=*/true);
+    evaluateManifest(FirmwareManifest::fromJson(reply->readAll()), mManifestFromUser);
 }
 
 void OtaManager::evaluateManifest(const FirmwareManifest &m, bool fromManualCheck)
@@ -138,8 +153,7 @@ void OtaManager::evaluateManifest(const FirmwareManifest &m, bool fromManualChec
     }
 
     mLatest = m;
-    // OTA_FORCE_UPDATE: ép luôn coi là có bản mới (test không cần bump version).
-    const bool newer = OtaConfig::forceUpdate()
+    const bool newer = mSettings.forceUpdate()
                        || FirmwareManifest::compareVersion(m.version, mCurrentVersion) > 0;
 
     if (fromManualCheck) {
@@ -161,9 +175,18 @@ void OtaManager::setAutoMode(bool autoMode)
 {
     if (mAutoMode != autoMode) {
         mAutoMode = autoMode;
-        // Lưu bền vững vào /data để giữ qua reboot/OTA.
         mSettings.setAutoMode(autoMode);
         mSettings.save();
+
+        if (mAutoMode) {
+            const int interval = mSettings.pollingIntervalSec();
+            if (interval > 0) {
+                mAutoPoller.setInterval(interval * 1000);
+                mAutoPoller.start();
+            }
+        } else {
+            mAutoPoller.stop();
+        }
     }
     // Vừa bật auto mà đã biết có bản mới (từ MQTT trước đó) -> popup luôn.
     if (mAutoMode && mLatest.isValid()

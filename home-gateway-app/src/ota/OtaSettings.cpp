@@ -30,7 +30,6 @@ void OtaSettings::load()
 
 bool OtaSettings::save() const
 {
-    // Đảm bảo thư mục cha tồn tại (vd /data/ota).
     const QString dir = QFileInfo(mPath).absolutePath();
     if (!QDir().mkpath(dir)) {
         qWarning() << "OtaSettings: cannot create dir" << dir;
@@ -48,10 +47,51 @@ bool OtaSettings::save() const
 
 bool OtaSettings::autoMode() const
 {
-    return mRoot.value(QStringLiteral("autoMode")).toBool(false);
+    return mRoot.value(QStringLiteral("auto-mode")).toBool(false);
 }
 
 void OtaSettings::setAutoMode(bool autoMode)
 {
-    mRoot.insert(QStringLiteral("autoMode"), autoMode);
+    mRoot.insert(QStringLiteral("auto-mode"), autoMode);
+}
+
+QString OtaSettings::manifestUrl() const
+{
+    return mRoot.value(QStringLiteral("manifest-url"))
+               .toString(QStringLiteral("http://192.168.137.10:8000/manifest.json"));
+}
+
+void OtaSettings::setManifestUrl(const QString &url)
+{
+    mRoot.insert(QStringLiteral("manifest-url"), url);
+}
+
+QString OtaSettings::mqttTopic() const
+{
+    return mRoot.value(QStringLiteral("mqtt-topic")).toString(QStringLiteral("ota/latest"));
+}
+
+void OtaSettings::setMqttTopic(const QString &topic)
+{
+    mRoot.insert(QStringLiteral("mqtt-topic"), topic);
+}
+
+bool OtaSettings::forceUpdate() const
+{
+    return mRoot.value(QStringLiteral("force-update")).toBool(false);
+}
+
+void OtaSettings::setForceUpdate(bool force)
+{
+    mRoot.insert(QStringLiteral("force-update"), force);
+}
+
+int OtaSettings::pollingIntervalSec() const
+{
+    return mRoot.value(QStringLiteral("polling-interval-sec")).toInt(60);
+}
+
+void OtaSettings::setPollingIntervalSec(int sec)
+{
+    mRoot.insert(QStringLiteral("polling-interval-sec"), sec);
 }

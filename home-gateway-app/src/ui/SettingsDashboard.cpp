@@ -63,19 +63,27 @@ SettingsWidget::SettingsWidget(QWidget *parent)
                      this, &SettingsWidget::backRequested);
     QObject::connect(ui->brightnessSlider, &QSlider::valueChanged,
                      this, &SettingsWidget::onBrightnessChanged);
+    QObject::connect(ui->brightnessSlider, &QSlider::sliderReleased,
+                     this, &SettingsWidget::onBrightnessReleased);
     QObject::connect(ui->otaToggle, &QCheckBox::toggled,
                      this, &SettingsWidget::onOtaToggled);
     QObject::connect(ui->checkUpdatesButton, &QPushButton::clicked,
                      this, &SettingsWidget::checkForUpdateRequested);
 
-    /* Init PWM cho backlight và set duty cycle ban đầu */
+    /* Init PWM cho backlight */
     if (mBacklightPwm.init(BACKLIGHT_PWM_CHIP_PATH,
                            BACKLIGHT_PWM_CHANNEL,
                            BACKLIGHT_PWM_PERIOD_NS) < 0) {
         qWarning() << "Failed to init backlight PWM";
-    } else {
-        mBacklightPwm.setBrightness(sliderToDutyPercent(ui->brightnessSlider->value()));
     }
+
+    /* Khôi phục độ sáng đã lưu (/data/config/setting.json) */
+    mAppSettings.load();
+    const int savedBrightness = mAppSettings.brightness();
+    ui->brightnessSlider->blockSignals(true);
+    ui->brightnessSlider->setValue(savedBrightness);
+    ui->brightnessSlider->blockSignals(false);
+    applyBrightness(savedBrightness);
 
     /* Đọc MAC address của interface và hiển thị */
     const QString mac = NetworkInfo::readMacAddress(DEVICE_NETWORK_INTERFACE);
@@ -121,10 +129,23 @@ SettingsWidget::~SettingsWidget()
     delete ui;
 }
 
-void SettingsWidget::onBrightnessChanged(int value)
+void SettingsWidget::applyBrightness(int value)
 {
     ui->brightnessValue->setText(QString("%1%").arg(value));
     mBacklightPwm.setBrightness(sliderToDutyPercent(value));
+}
+
+void SettingsWidget::onBrightnessChanged(int value)
+{
+    // Cập nhật live trong lúc kéo slider; chưa ghi file để tránh I/O liên tục.
+    applyBrightness(value);
+}
+
+void SettingsWidget::onBrightnessReleased()
+{
+    // Chỉ lưu khi user thả slider -> một lần ghi /data cho mỗi lần chỉnh.
+    mAppSettings.setBrightness(ui->brightnessSlider->value());
+    mAppSettings.save();
 }
 
 void SettingsWidget::onOtaToggled(bool checked)

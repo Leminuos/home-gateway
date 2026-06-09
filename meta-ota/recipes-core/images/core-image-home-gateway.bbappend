@@ -6,6 +6,7 @@ IMAGE_INSTALL:append = " \
     swupdate-www         \
     libubootenv-bin      \
     ota-confirm-boot     \
+    data-partition       \
 "
 
 WKS_FILE = "bbb-ota.wks"
@@ -14,7 +15,7 @@ IMAGE_FSTYPES = " wic wic.bmap ext4.gz"
 # Rootfs mount read-only
 IMAGE_FEATURES:append = " read-only-rootfs"
 
-do_image_wic[depends] += "virtual/bootloader:do_deploy"
+do_image_wic[depends] += "virtual/bootloader:do_deploy data-partition:do_deploy"
 
 # /etc/hwrevision — sw-description dùng để check hardware compatibility
 # /etc/sw-version — SWUpdate dùng để so sánh version khi có rule no-downgrade

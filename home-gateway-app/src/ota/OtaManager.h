@@ -38,7 +38,7 @@ public:
 
 public slots:
     void setAutoMode(bool autoMode);
-    void checkForUpdate();   // manual: HTTP GET manifest
+    void checkForUpdate(bool fromUser = true);  // fromUser=false: auto poll, không emit upToDate/checkFailed
     void confirmUpdate();    // user bấm "Update now": tải + cài
     void cancel();           // huỷ tải/cài, về idle
     void reboot();           // user bấm "Reboot now"
@@ -92,9 +92,11 @@ private:
     QNetworkReply *mUploadReply;
     QFile mDownloadFile;
 
-    bool mEnteredFlash;      // đã chuyển sang phase Flash chưa
-    bool mInstallConcluded;  // đã chốt success/fail cho lần cài hiện tại chưa
+    bool mEnteredFlash;
+    bool mInstallConcluded;
+    bool mManifestFromUser;  // phân biệt request từ user (true) hay auto poll (false)
     QTimer mUstatePoller;    // fallback phát hiện hoàn tất qua U-Boot env
+    QTimer mAutoPoller;      // HTTP poll định kỳ khi ở chế độ auto
 };
 
 #endif // OTAMANAGER_H

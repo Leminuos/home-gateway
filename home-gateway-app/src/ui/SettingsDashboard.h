@@ -4,6 +4,7 @@
 #include <QWidget>
 
 #include "drivers/BacklightPwm.h"
+#include "settings/AppSettings.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class SettingsWidget; }
@@ -32,11 +33,15 @@ signals:
     void checkForUpdateRequested();          // nút "Check for updates"
 
 private:
+    // Cập nhật nhãn + duty cycle PWM theo giá trị slider (không ghi file).
+    void applyBrightness(int value);
     void onBrightnessChanged(int value);
+    void onBrightnessReleased();
     void onOtaToggled(bool checked);
 
     Ui::SettingsWidget *ui;
     BacklightPwm mBacklightPwm;
+    AppSettings mAppSettings;
 };
 
 #endif // SETTINGSDASHBOARD_H
