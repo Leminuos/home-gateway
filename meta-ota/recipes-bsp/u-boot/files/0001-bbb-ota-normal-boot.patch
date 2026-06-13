@@ -5,7 +5,7 @@ diff --git a/include/configs/am335x_evm.h b/include/configs/am335x_evm.h
 index 7fb1b3a3e3f..c3a1d9fe2bb 100644
 --- a/include/configs/am335x_evm.h
 +++ b/include/configs/am335x_evm.h
-@@ -152,6 +152,46 @@
+@@ -152,6 +152,48 @@
  		"else " \
  			"setenv console ttyO0,115200n8;" \
  		"fi;\0" \
@@ -13,8 +13,8 @@ index 7fb1b3a3e3f..c3a1d9fe2bb 100644
 +	"active_slot=A\0" \
 +	"boot_count=0\0" \
 +	"ustate=0\0" \
-+	"kernel_image=/boot/zImage\0" \
-+	"fdtfile=/boot/am335x-boneblack.dtb\0" \
++	"kernel_image=zImage\0" \
++	"fdtfile=am335x-boneblack.dtb\0" \
 +	"ota_check_rollback=" \
 +		"if test \"${ustate}\" = \"1\"; then " \
 +			"if test ${boot_count} -ge ${boot_limit}; then " \
@@ -35,18 +35,20 @@ index 7fb1b3a3e3f..c3a1d9fe2bb 100644
 +		"fi\0" \
 +	"ota_pick_slot=" \
 +		"if test \"${active_slot}\" = \"A\"; then " \
-+			"setenv mmc_part 1; " \
++			"setenv boot_part 1; " \
++			"setenv root_part 2; " \
 +		"else " \
-+			"setenv mmc_part 2; " \
++			"setenv boot_part 3; " \
++			"setenv root_part 4; " \
 +		"fi\0" \
 +	"ota_load_kernel=" \
-+		"echo OTA: loading kernel from slot ${active_slot} (mmcblk0p${mmc_part}); " \
-+		"ext4load mmc 0:${mmc_part} ${kernel_addr_r} ${kernel_image}; " \
-+		"ext4load mmc 0:${mmc_part} ${fdt_addr_r} ${fdtfile}\0" \
++		"echo OTA: loading kernel from slot ${active_slot} (mmcblk0p${boot_part}); " \
++		"fatload mmc 0:${boot_part} ${kernel_addr_r} ${kernel_image}; " \
++		"fatload mmc 0:${boot_part} ${fdt_addr_r} ${fdtfile}\0" \
 +	"ota_boot=" \
 +		"run ota_check_rollback; " \
 +		"run ota_pick_slot; " \
-+		"setenv bootargs root=/dev/mmcblk0p${mmc_part} ro rootwait console=ttyO0,115200n8 panic=10; " \
++		"setenv bootargs root=/dev/mmcblk0p${root_part} ro rootwait console=ttyO0,115200n8 panic=10; " \
 +		"run ota_load_kernel; " \
 +		"bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
  	NANDARGS \

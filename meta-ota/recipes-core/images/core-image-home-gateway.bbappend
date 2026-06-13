@@ -9,13 +9,19 @@ IMAGE_INSTALL:append = " \
     data-partition       \
 "
 
-WKS_FILE = "bbb-ota.wks"
-IMAGE_FSTYPES = " wic wic.bmap ext4.gz"
+inherit ${@bb.utils.contains('DISTRO_FEATURES', 'secure-boot', 'verity-image', '', d)}
+IMAGE_FSTYPES = "${@bb.utils.contains('DISTRO_FEATURES', 'secure-boot', 'ext4 ext4.verity ext4.verity.gz', 'ext4 ext4.gz', d)}"
+
+IMAGE_ROOTFS_SIZE = "147456"
+IMAGE_OVERHEAD_FACTOR = "1.0"
+IMAGE_ROOTFS_EXTRA_SPACE = "0"
+
+EXTRA_IMAGECMD:ext4 += "-b 4096"
 
 # Rootfs mount read-only
 IMAGE_FEATURES:append = " read-only-rootfs"
 
-do_image_wic[depends] += "virtual/bootloader:do_deploy data-partition:do_deploy"
+do_build[depends] += "home-gateway-disk:do_image_complete"
 
 # /etc/hwrevision — sw-description dùng để check hardware compatibility
 # /etc/sw-version — SWUpdate dùng để so sánh version khi có rule no-downgrade

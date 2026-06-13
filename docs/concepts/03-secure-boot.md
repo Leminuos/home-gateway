@@ -1,14 +1,27 @@
-# Secure Boot — U-Boot Verified Boot
+# Secure Boot — U-Boot Verified Boot + dm-verity
 
 ## Tổng quan
 
-Secure Boot trong dự án này hiện triển khai **U-Boot Verified Boot**. dm-verity chưa được triển khai.
+Secure Boot trong dự án này gồm hai lớp: **U-Boot Verified Boot** (xác minh kernel/dtb/initramfs lúc boot) và **dm-verity** (xác minh từng block rootfs khi đọc lúc runtime). Hai lớp nối thành một chuỗi tin cậy duy nhất.
 
-Mục tiêu: U-Boot từ chối boot kernel nếu FIT image không có chữ ký RSA hợp lệ, ngăn chặn attacker thay kernel/dtb trên thiết bị.
+Mục tiêu: U-Boot từ chối boot kernel nếu FIT image không có chữ ký RSA hợp lệ (ngăn thay kernel/dtb), và kernel từ chối đọc bất kỳ block rootfs nào không khớp hash tree (ngăn sửa rootfs trên block device).
+
+## Chain of trust
+
+```
+U-Boot public key (trong u-boot.dtb)
+   └─ verify chữ ký RSA của FIT image
+        └─ FIT chứa: kernel + dtb + initramfs   (cả 3 đều được ký)
+             └─ initramfs chứa /etc/verity.env  (ROOT_HASH của rootfs)
+                  └─ veritysetup open rootfs với ROOT_HASH
+                       └─ mỗi block rootfs đọc ra phải khớp hash tree
+```
+
+Vì root hash nằm trong initramfs, mà initramfs nằm trong FIT đã ký, nên không thể sửa rootfs lẫn root hash mà không phá chữ ký FIT. Sửa rootfs -> verity đọc lỗi -> reboot -> rollback. Sửa fitImage -> U-Boot từ chối boot -> rollback.
 
 Tính năng được kiểm soát qua `DISTRO_FEATURES`:
-- **Bật** (mặc định cho prod): `secure-boot` có trong `DISTRO_FEATURES`
-- **Tắt** (dev mode): thêm `DISTRO_FEATURES:remove = "secure-boot"` vào `local.conf`
+- Bật (mặc định cho prod): `secure-boot` có trong `DISTRO_FEATURES`
+- Tắt (dev mode): thêm `DISTRO_FEATURES:remove = "secure-boot"` vào `local.conf`
 
 ---
 
@@ -18,14 +31,15 @@ Tính năng được kiểm soát qua `DISTRO_FEATURES`:
 
 1. MLO load `u-boot.img` vào RAM
 2. U-Boot đọc env từ MMC offset 0x260000
-3. `bootcmd = run ota_boot` -> `ota_check_rollback` -> `ota_pick_slot` -> `ota_load_kernel` -> `bootm`
-4. `ota_load_kernel`: `ext4load mmc 0:${mmc_part} ${kernel_addr_r} /boot/fitImage`
-5. `bootm`: parse FIT image -> xác minh chữ ký RSA bằng public key trong `u-boot.dtb`
-6. Nếu chữ ký hợp lệ -> boot kernel; nếu sai -> dừng, in lỗi
+3. `bootcmd = run ota_boot` -> `ota_check_rollback` -> `ota_pick_slot` (đặt `boot_part`/`root_part` theo slot) -> `ota_load_kernel` -> `bootm`
+4. `ota_load_kernel`: `fatload mmc 0:${boot_part} ${kernel_addr_r} fitImage` (fitImage nằm ở boot partition FAT của slot)
+5. `bootm`: parse FIT image -> xác minh chữ ký RSA của kernel + dtb + initramfs bằng public key trong `u-boot.dtb`
+6. Chữ ký hợp lệ -> boot kernel kèm initramfs; sai -> dừng, in lỗi
+7. initramfs `/init`: đọc `root=/dev/mmcblk0p${root_part}` từ cmdline -> `veritysetup open` rootfs với `ROOT_HASH` trong `/etc/verity.env` -> mount `/dev/mapper/rootfs` ro -> `switch_root`. Verity/mount fail -> `reboot -f` -> rollback.
 
 **Luồng boot khi `secure-boot` tắt:**
 
-Bước 4–6 thay bằng `ext4load zImage + am335x-boneblack.dtb` -> `bootz` — không xác minh chữ ký.
+Bước 4–7 thay bằng `fatload zImage + am335x-boneblack.dtb` từ boot partition -> `bootz`, mount thẳng `root=/dev/mmcblk0p${root_part}` (ext4 thường) — không xác minh chữ ký, không verity, không initramfs.
 
 ---
 
@@ -33,7 +47,7 @@ Bước 4–6 thay bằng `ext4load zImage + am335x-boneblack.dtb` -> `bootz` �
 
 ### FIT Image
 
-FIT (Flattened Image Tree) là format image của U-Boot, đóng gói `kernel` (`zImage`) và `fdt` (`am335x-boneblack.dtb`). Được build bởi `kernel-fitimage.bbclass` trong Yocto. Địa chỉ load/entry cho BBB (Cortex-A8, DDR3 tại `0x80000000`) được set trong machine conf: `UBOOT_LOADADDRESS = "0x80008000"`, `UBOOT_ENTRYPOINT = "0x80008000"`, `UBOOT_DTB_LOADADDRESS = "0x88000000"`. Mỗi slot A/B có `fitImage` riêng tại `/boot/fitImage` trong rootfs của slot đó.
+FIT (Flattened Image Tree) là format image của U-Boot, đóng gói `kernel` (`zImage`), `fdt` (`am335x-boneblack.dtb`) và `ramdisk` (initramfs). Được build bởi `kernel-fitimage.bbclass` trong Yocto; khi `INITRAMFS_IMAGE` được set và `INITRAMFS_IMAGE_BUNDLE = "0"`, class tự thêm node `ramdisk` và đưa `"ramdisk"` vào danh sách `sign-images` (ký cùng kernel + fdt). Địa chỉ load/entry cho BBB (Cortex-A8, DDR3 tại `0x80000000`) được set trong machine conf: `UBOOT_LOADADDRESS = "0x80008000"`, `UBOOT_ENTRYPOINT = "0x80008000"`, `UBOOT_DTB_LOADADDRESS = "0x88000000"`. Mỗi slot A/B có `fitImage` riêng nằm ở **boot partition FAT** của slot (bootA/bootB), không còn trong rootfs.
 
 ### RSA Key Pair
 
@@ -56,8 +70,8 @@ Hai chế độ boot được bake vào U-Boot binary qua patch riêng:
 
 | Mode | Patch | Load command | Boot command |
 |---|---|---|---|
-| `secure-boot` tắt | `0001-bbb-ota-normal-boot.patch` | `ext4load zImage + dtb` | `bootz` |
-| `secure-boot` bật | `0001-bbb-ota-secure-boot.patch` | `ext4load fitImage` | `bootm` |
+| `secure-boot` tắt | `0001-bbb-ota-normal-boot.patch` | `fatload zImage + dtb` (bootA/bootB) | `bootz` |
+| `secure-boot` bật | `0001-bbb-ota-secure-boot.patch` | `fatload fitImage` (bootA/bootB) | `bootm` |
 
 Cả hai patch đều chứa đầy đủ OTA env (ota_check_rollback, ota_pick_slot, ota_load_kernel, ota_boot) — chỉ khác nhau ở phần load/boot command.
 
@@ -89,32 +103,41 @@ DISTRO_FEATURES:append = " secure-boot"
 
 ---
 
-## Build flow khi `secure-boot` bật
+## Build flow khi bật `secure-boot`
 
 ```
 virtual/bootloader:do_compile
-    └─ build u-boot-nodtb.bin + u-boot.dtb (CONFIG_OF_SEPARATE=y)
-       └─ apply verified-boot.cfg: CONFIG_FIT, CONFIG_FIT_SIGNATURE, CONFIG_RSA…
-       └─ apply 0001-bbb-ota-secure-boot.patch
+    └─ apply verified-boot.cfg: CONFIG_FIT, CONFIG_FIT_SIGNATURE, CONFIG_RSA…
+    └─ apply 0001-bbb-ota-secure-boot.patch
 
 virtual/bootloader:do_deploy
-    └─ deploy: u-boot-nodtb.bin, u-boot.dtb → DEPLOY_DIR_IMAGE/
+    └─ deploy: u-boot-nodtb.bin, u-boot.dtb -> DEPLOY_DIR_IMAGE/
 
-virtual/kernel:do_assemble_fitimage  (kernel-fitimage.bbclass)
-    ├─ pack zImage + am335x-boneblack.dtb → fitImage
-    ├─ sign fitImage bằng keys/dev.key (SHA256+RSA2048)
-    └─ inject public key (dev.crt) vào DEPLOY_DIR_IMAGE/u-boot.dtb
+core-image-home-gateway:do_rootfs
+    └─ core-image-home-gateway-*.ext4.verity
+    └─ core-image-home-gateway-*.verity.env
+
+home-gateway-initramfs:do_rootfs
+    └─ bake .verity.env -> /etc/verity.env -> cpio.gz
+
+virtual/kernel:do_assemble_fitimage_initramfs  (kernel-fitimage.bbclass)
+    ├─ zImage + am335x-boneblack.dtb + initramfs -> fitImage
+    ├─ sign kernel + fdt + ramdisk bằng keys/dev.key
+    └─ inject public key vào DEPLOY_DIR_IMAGE/u-boot.dtb
 
 virtual/bootloader:do_concat_dtb  (uboot-sign.bbclass)
-    └─ cat u-boot-nodtb.bin + u-boot.dtb → u-boot.img (final, có public key)
+    └─ cat u-boot-nodtb.bin + u-boot.dtb -> u-boot.img (final, có public key)
 
-core-image-home-gateway:do_image_wic
-    └─ MLO + u-boot.img + u-boot-env.raw + rootfs (có /boot/fitImage)
+home-gateway-disk:do_bootfs -> boot-home-gateway.vfat (chứa fitImage)
+
+home-gateway-disk:do_image_wic
 ```
+
+Vì rootfs đổi -> root hash đổi -> initramfs rebuild -> fitImage re-sign, taskhash chain của bitbake tự đảm bảo mọi artifact đồng bộ mà không cần `nostamp`.
 
 ---
 
 ## Giới hạn hiện tại
 
-- **dm-verity chưa triển khai**: rootfs có thể bị sửa trực tiếp trên block device sau khi boot. U-Boot Verified Boot chỉ bảo vệ quá trình khởi động.
-- **U-Boot không được bảo vệ ở ROM level**: Kẻ tấn công có thể thay `u-boot.img` trên MMC bằng bản không có public key. Bảo vệ hoàn toàn cần AM335x Secure Boot ở ROM (fusing) — ngoài phạm vi dự án hiện tại.
+- **Root hash nằm trong chuỗi đã ký** (initramfs trong FIT) nên dm-verity chống được tamper chủ động rootfs. Chi tiết vì sao chọn cách này: [docs/decisions/02-dm-verity-partition.md](../decisions/02-dm-verity-partition.md).
+- **U-Boot không được bảo vệ ở ROM level**: Kẻ tấn công có thể thay `u-boot.img` hoặc `MLO` trên MMC bằng bản không có public key. Bảo vệ hoàn toàn cần AM335x Secure Boot ở ROM (fusing eFuse) — ngoài phạm vi dự án hiện tại.

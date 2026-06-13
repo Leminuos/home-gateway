@@ -45,7 +45,7 @@ meta-bsp/
 - Set `APPEND` console = `ttyO0,115200n8`, tắt fbcon (`fbcon=map:off`) để Qt vẽ trực tiếp lên framebuffer của ILI9341 không bị console chiếm.
 - Set `MACHINEOVERRIDES` để các recipe có thể override theo `beaglebone-yocto` hoặc `bbb-home-gateway`.
 
-Lưu ý: **partition layout** (A/B + boot + data) không khai báo ở machine.conf mà ở [meta-ota/wic/bbb-ota.wks](../meta-ota/wic/bbb-ota.wks), được pick lên bởi `core-image-home-gateway.bbappend` của meta-ota.
+Lưu ý: **partition layout** (5 partition GPT: bootA/rootA/bootB/rootB/data) không khai báo ở machine.conf mà ở [meta-ota/wic/bbb-ota.wks.in](../meta-ota/wic/bbb-ota.wks.in), được dùng bởi recipe lắp đĩa `home-gateway-disk` của meta-ota.
 
 ---
 

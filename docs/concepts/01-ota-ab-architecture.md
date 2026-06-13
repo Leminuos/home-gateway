@@ -89,3 +89,4 @@
 
 - Cách dự án triển khai cụ thể: [meta-ota/README.md](../../meta-ota/README.md)
 - Vì sao A/B cả kernel/dtb chứ không chỉ rootfs: [decisions/01-rootfs-only-vs-full-ab.md](../decisions/01-rootfs-only-vs-full-ab.md)
+- Layout disk hiện tại — **5 partition GPT**. Mỗi slot có boot partition + root partition. Vì sao 5 partition + dm-verity: [decisions/02-dm-verity-partition.md](../decisions/02-dm-verity-partition.md), [concepts/03-secure-boot.md](03-secure-boot.md).

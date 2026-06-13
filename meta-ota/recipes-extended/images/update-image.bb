@@ -18,21 +18,24 @@ SRC_URI = " \
 IMAGE_NAME = "${IMAGE_BASENAME}-${MACHINE}-${PV}"
 IMAGE_LINK_NAME = "${IMAGE_BASENAME}-${MACHINE}"
 
-# images to build before building swupdate image
-IMAGE_DEPENDS = "core-image-home-gateway"
+IMAGE_DEPENDS = "core-image-home-gateway home-gateway-disk"
 
-# images and files that will be included in the .swu image
-SWUPDATE_IMAGES = "core-image-home-gateway"
+SWUPDATE_IMAGES = "boot-home-gateway core-image-home-gateway"
 
-SWUPDATE_IMAGES_FSTYPES[core-image-home-gateway] = ".ext4.gz"
+ROOT_FSTYPE = "${@bb.utils.contains('DISTRO_FEATURES', 'secure-boot', '.ext4.verity.gz', '.ext4.gz', d)}"
+SWUPDATE_IMAGES_FSTYPES[core-image-home-gateway] = "${ROOT_FSTYPE}"
+SWUPDATE_IMAGES_FSTYPES[boot-home-gateway] = ".vfat.gz"
+SWUPDATE_IMAGES_NOAPPEND_MACHINE[boot-home-gateway] = "1"
 
 do_render_swdesc() {
-    image_name="core-image-home-gateway-${MACHINE}.ext4.gz"
+    boot_image="boot-home-gateway.vfat.gz"
+    root_image="core-image-home-gateway-${MACHINE}${ROOT_FSTYPE}"
 
     sed -e "s|@VERSION@|${OTA_SW_VERSION}|g" \
         -e "s|@HW_REVISION@|${OTA_HW_REVISION}|g" \
         -e "s|@BOARD_NAME@|${OTA_BOARD_NAME}|g" \
-        -e "s|@IMAGE_NAME@|${image_name}|g" \
+        -e "s|@BOOT_IMAGE@|${boot_image}|g" \
+        -e "s|@ROOT_IMAGE@|${root_image}|g" \
         ${WORKDIR}/beaglebone/sw-description.in > ${WORKDIR}/sw-description
 
     install -m 0755 ${WORKDIR}/beaglebone/switch-slot.sh ${WORKDIR}/switch-slot.sh
