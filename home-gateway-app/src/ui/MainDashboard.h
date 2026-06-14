@@ -5,6 +5,7 @@
 
 #include "drivers/LightSensor.h"
 #include "drivers/TemperatureHumiditySensor.h"
+#include "logging/SensorLogger.h"
 #include "network/MqttClient.h"
 
 #include <QTimer>
@@ -37,5 +38,6 @@ private:
     MqttClient client;
     LightSensor mLightSensor;
     TemperatureHumiditySensor mTemperatureHumiditySensor;
+    SensorLogger mSensorLogger;
 };
 #endif // WIDGET_H

@@ -72,6 +72,12 @@ int Widget::init(const QString &mqttHost, int mqttPort)
         ui->humValue->setText(QString::number((int)celsiusHumidityValue.humidity));
         ui->illValue->setText(QString::number(luxValue));
 
+        mSensorLogger.append(
+            (double)celsiusHumidityValue.temperature,
+            (int)celsiusHumidityValue.humidity,
+            luxValue
+        );
+
         if (client.isConnected()) {
             client.publishMessage(
                 "sensor/temp",
