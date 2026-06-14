@@ -19,10 +19,12 @@ home-gateway-app/
 ├── src/
 │   ├── main.cpp                # entrypoint: dựng UI, khởi tạo OtaManager, nối signal
 │   ├── ui/                     # các Screen + shared widget (.h/.cpp/.ui)
-│   │   ├── MainDashboard.*     # class Widget — màn chính: đọc sensor, publish MQTT
+│   │   ├── MainDashboard.*     # class Widget — tab Home: đọc sensor, publish MQTT
+│   │   ├── ChartDashboard.*    # tab Dashboard — 3 chart Qt Charts (1h/6h/24h)
 │   │   ├── SettingsDashboard.* # SettingsWidget — backlight + chế độ OTA + version
+│   │   ├── BottomNavBar.*      # shared widget — nav bar Home/Dashboard/Settings
 │   │   ├── StatusHeader.*      # shared widget — chỉ báo online/offline
-│   │   ├── FirmwareUpdateProgress.*  # màn tiến độ update (download -> verify -> flash -> done)
+│   │   ├── FirmwareUpdateProgress.*  # màn tiến độ update (download -> flash -> done)
 │   │   └── FirmwareUpdatePopup.*     # popup version mới
 │   ├── drivers/
 │   │   ├── TemperatureHumiditySensor.*  # SHT30 qua I2C (0x44)
@@ -32,7 +34,7 @@ home-gateway-app/
 │   │   ├── MqttClient.*        # wrap libmosquitto, loop bằng QTimer
 │   │   └── NetworkInfo.*       # đọc MAC address
 │   └── ota/
-│       ├── OtaManager.*        # điều phối: phát hiện -> tải .swu -> POST daemon -> reboot
+│       ├── OtaManager.*        # điều phối: phát hiện -> đưa URL cho swupdate downloader -> reboot
 │       ├── OtaConfig.h         # cấu hình qua env (URL manifest, topic, socket…)
 │       ├── OtaSettings.*       # lưu auto/manual ở /data/ota/config.json
 │       ├── FirmwareManifest.*  # parse manifest JSON + so sánh version
@@ -44,17 +46,17 @@ home-gateway-app/
 
 ## Thành phần theo thư mục
 
-- **`src/main.cpp`** — Dựng `QWidget` root cố định 240×320 gồm `StatusHeader` + `QStackedWidget` (3 screen: MainDashboard, SettingsDashboard, FirmwareUpdateProgress). `FirmwareUpdatePopup` là overlay phủ toàn màn (con trực tiếp của root). Tạo `OtaManager` và nối toàn bộ signal/slot giữa UI <-> OTA tại đây — main là nơi điều phối, các widget không biết nhau.
+- **`src/main.cpp`** — Dựng `QWidget` root cố định 240×320 gồm `StatusHeader` (trên) + `QStackedWidget` (giữa, 4 screen: MainDashboard/Home, ChartDashboard, SettingsDashboard, FirmwareUpdateProgress) + `BottomNavBar` (dưới). `FirmwareUpdatePopup` là overlay phủ toàn màn (con trực tiếp của root). Tạo `OtaManager` và nối toàn bộ signal/slot giữa UI <-> OTA tại đây — main là nơi điều phối, các widget không biết nhau.
 - **`src/ui/`** — Tầng giao diện (Qt Widgets + Qt Designer). Mỗi Screen là một `QWidget` có file `.ui` riêng:
   - **MainDashboard**: mỗi 3s đọc sensor, cập nhật label và publish `sensor/temp` · `sensor/humi` · `sensor/lux` (retained); hiện thị trạng thái online/offline theo trạng thái MQTT.
   - **SettingsDashboard**: slider điều chỉnh backlight, toggle OTA Auto/Manual, hiện thị version hiện tại, nút nhấn *Check for updates*.
   - **StatusHeader** / **FirmwareUpdatePopup**: shared widget dùng chung.
-  - **FirmwareUpdateProgress**: view thuần, được `OtaManager` điều phối qua các slot `start -> setDownloadProgress -> enterVerify -> enterFlash -> complete/fail`.
+  - **FirmwareUpdateProgress**: view thuần, được `OtaManager` điều phối qua các slot `start -> setDownloadProgress -> enterFlash -> complete/fail`.
 - **`src/drivers/`** — Đọc/ghi phần cứng trực tiếp:
   - Đọc cảm biến qua `/dev/i2c-1` (SHT30 `0x44`, BH1750 `0x23`)
   - Backlight set duty cycle qua sysfs PWM.
 - **`src/network/`** — `MqttClient` bọc `libmosquitto`: gọi `mosquitto_loop()` định kỳ bằng `QTimer`, tự reconnect.
-- **`src/ota/`** — OTA **pull-model**: app chủ động phát hiện bản mới (Auto = MQTT retained `ota/latest`; Manual = HTTP GET manifest), tải `.swu`, **POST `127.0.0.1:8080`** cho SWUpdate daemon flash, theo dõi tiến độ qua socket rồi hiện nút *Reboot now*. Toàn bộ endpoint cấu hình qua env trong [`OtaConfig.h`](src/ota/OtaConfig.h). Chi tiết: [changes/0005](../docs/changes/0005-ota-pull-model-host-server.md).
+- **`src/ota/`** — OTA **pull-model**: app chủ động phát hiện bản mới (Auto = MQTT retained `ota/latest`; Manual = HTTP GET manifest), rồi **đưa URL `.swu` cho SWUpdate downloader** (`09-swupdate-args <url>` → `swupdate -d` one-shot) để SWUpdate tự tải + flash, theo dõi tiến độ download/flash qua socket rồi hiện nút *Reboot now*. Toàn bộ endpoint cấu hình qua env trong [`OtaConfig.h`](src/ota/OtaConfig.h). Chi tiết: [changes/0005](../docs/changes/0005-ota-pull-model-host-server.md), [changes/0012](../docs/changes/0012-ota-swupdate-downloader.md).
 - **`resources/`** — `resources.qrc` nhúng icon (temperature/humidity/sun/settings) và 4 file QSS (load trong `main.cpp`).
 
 ---
@@ -62,7 +64,7 @@ home-gateway-app/
 ## Luồng chính
 
 - **Sensor -> MQTT:** `MainDashboard` timer 3s -> đọc I2C -> cập nhật UI + publish `sensor/*` (retained) nếu đang connected.
-- **Điều hướng:** Dashboard ⇄ Settings qua `QStackedWidget`; popup OTA nổi trên mọi screen.
+- **Điều hướng:** `BottomNavBar` chuyển giữa Home / Dashboard / Settings qua `QStackedWidget` (ẩn khi đang OTA); popup OTA nổi trên mọi screen.
 - **OTA:** `OtaManager` phát `updateAvailable` -> popup -> user xác nhận -> chuyển sang `FirmwareUpdateProgress`, `OtaManager` tải + cài và phát tiến độ -> xong hiện *Reboot now* -> `OtaManager::reboot()`.
 
 ---
@@ -79,6 +81,6 @@ home-gateway-app/
 | `MQTT_BROKER_HOST` / `MQTT_BROKER_PORT` | `127.0.0.1` / `1883` | Broker (chung cho sensor + OTA auto) |
 | `OTA_MANIFEST_URL` | `http://192.168.137.1:8000/manifest.json` | Manifest cho mode manual |
 | `OTA_MQTT_TOPIC` | `ota/latest` | Topic retained host publish version mới |
-| `OTA_SWUPDATE_URL` | `http://127.0.0.1:8080/upload` | Endpoint POST `.swu` cho daemon |
+| `OTA_SWUPDATE_TOOL` | `/usr/bin/09-swupdate-args` | Script gọi SWUpdate downloader kèm URL `.swu` |
 | `OTA_CONFIG_FILE` | `/data/ota/config.json` | Lưu chế độ Auto/Manual (giữ qua OTA) |
 | `OTA_FORCE_UPDATE` | *(off)* | `=1` để bỏ so sánh version khi test |

@@ -1,5 +1,7 @@
 #include "ota/OtaManager.h"
 #include "ota/MqttSettings.h"
+#include "ui/BottomNavBar.h"
+#include "ui/ChartDashboard.h"
 #include "ui/FirmwareUpdatePopup.h"
 #include "ui/FirmwareUpdateProgress.h"
 #include "ui/MainDashboard.h"
@@ -35,7 +37,11 @@ int main(int argc, char *argv[])
                     + "\n"
                     + loadStyleSheet(":/styles/firmware_popup.qss")
                     + "\n"
-                    + loadStyleSheet(":/styles/firmware_progress.qss"));
+                    + loadStyleSheet(":/styles/firmware_progress.qss")
+                    + "\n"
+                    + loadStyleSheet(":/styles/chart.qss")
+                    + "\n"
+                    + loadStyleSheet(":/styles/bottomnav.qss"));
 
     QWidget root;
     root.setFixedSize(240, 320);
@@ -52,11 +58,22 @@ int main(int argc, char *argv[])
     QStackedWidget *stack = new QStackedWidget(&root);
     rootLayout->addWidget(stack, 1);
 
+    BottomNavBar *navBar = new BottomNavBar(&root);
+    rootLayout->addWidget(navBar);
+
     Widget *dashboard = new Widget(stack);
+
+    // Nạp lịch sử số liệu (CSV trên /data) trước khi dựng ChartDashboard để chart
+    // vẽ ngay lịch sử có sẵn khi mở app.
+    dashboard->sensorLogger().load();
+
+    ChartDashboard *charts = new ChartDashboard(&dashboard->sensorLogger(), stack);
     SettingsWidget *settings = new SettingsWidget(stack);
     FirmwareUpdateProgress *progress = new FirmwareUpdateProgress(stack);
 
+    // Thứ tự index khớp với BottomNavBar (Home=0, Dashboard=1, Settings=2).
     const int dashboardIndex = stack->addWidget(dashboard);
+    const int chartsIndex = stack->addWidget(charts);
     const int settingsIndex = stack->addWidget(settings);
     const int progressIndex = stack->addWidget(progress);
 
@@ -76,12 +93,15 @@ int main(int argc, char *argv[])
     // ---- Điều hướng cơ bản giữa các screen --------------------------------
     QObject::connect(dashboard, &Widget::onlineChanged,
                      statusHeader, &StatusHeader::setOnlineStatus);
-    QObject::connect(dashboard, &Widget::settingsRequested, [&]() {
-        stack->setCurrentIndex(settingsIndex);
+
+    // Bottom nav: index nút khớp index stack cho 3 screen chính.
+    QObject::connect(navBar, &BottomNavBar::navRequested, [&](int index) {
+        stack->setCurrentIndex(index);
     });
-    QObject::connect(settings, &SettingsWidget::backRequested, [&]() {
-        stack->setCurrentIndex(dashboardIndex);
-    });
+
+    // Cấp dữ liệu cho chart theo nhịp 1/phút (logger phát khi thực sự ghi mẫu).
+    QObject::connect(&dashboard->sensorLogger(), &SensorLogger::sampleAdded,
+                     charts, &ChartDashboard::appendSample);
 
     // ---- Settings <-> OtaManager ------------------------------------------
     QObject::connect(ota, &OtaManager::currentVersionChanged,
@@ -113,10 +133,12 @@ int main(int argc, char *argv[])
     });
 
     // ---- Popup -> bắt đầu update ------------------------------------------
+    // Trong lúc cập nhật ẩn nav bar để không cho điều hướng đi nơi khác.
     QObject::connect(popup, &FirmwareUpdatePopup::updateConfirmed, [&]() {
         popup->hide();
         progress->start(ota->availableVersion());
         stack->setCurrentIndex(progressIndex);
+        navBar->hide();
         ota->confirmUpdate();
     });
     QObject::connect(popup, &FirmwareUpdatePopup::cancelled, [&]() {
@@ -126,8 +148,6 @@ int main(int argc, char *argv[])
     // ---- OtaManager tiến độ -> FirmwareUpdateProgress ----------------------
     QObject::connect(ota, &OtaManager::downloadPercent,
                      progress, &FirmwareUpdateProgress::setDownloadProgress);
-    QObject::connect(ota, &OtaManager::phaseVerify,
-                     progress, &FirmwareUpdateProgress::enterVerify);
     QObject::connect(ota, &OtaManager::phaseFlash,
                      progress, &FirmwareUpdateProgress::enterFlash);
     QObject::connect(ota, &OtaManager::flashPercent,
@@ -141,12 +161,15 @@ int main(int argc, char *argv[])
     QObject::connect(progress, &FirmwareUpdateProgress::cancelled, [&]() {
         ota->cancel();
         stack->setCurrentIndex(settingsIndex);
+        navBar->setActive(BottomNavBar::Settings);
+        navBar->show();
     });
     QObject::connect(progress, &FirmwareUpdateProgress::rebootRequested, [&]() {
         ota->reboot();
     });
 
     stack->setCurrentIndex(dashboardIndex);
+    navBar->setActive(BottomNavBar::Home);
     root.show();
 
     MqttSettings mqttCfg;

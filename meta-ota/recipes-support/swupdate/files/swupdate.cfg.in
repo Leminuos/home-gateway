@@ -20,11 +20,3 @@ download :
 identify : (
     { name = "board"; value = "@BOARD_NAME@"; }
 );
-
-webserver :
-{
-    document_root = "/www";
-    port          = 8080;
-    userid        = 0;
-    groupid       = 0;
-};

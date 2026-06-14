@@ -1,8 +1,6 @@
 #include "MainDashboard.h"
 #include "./ui_MainDashboard.h"
 
-#include <QPushButton>
-
 #define LIGHT_SENSOR_DEVICE_PATH                "/dev/i2c-1"
 #define LIGHT_SENSOR_DEVICE_ADDRESS             0x23
 
@@ -14,9 +12,6 @@ Widget::Widget(QWidget *parent)
     , ui(new Ui::Widget)
 {
     ui->setupUi(this);
-
-    QObject::connect(ui->settingsButton, &QPushButton::clicked,
-                     this, &Widget::settingsRequested);
 }
 
 Widget::~Widget()
@@ -71,6 +66,12 @@ int Widget::init(const QString &mqttHost, int mqttPort)
         ui->tempValue->setText(QString::number((double)celsiusHumidityValue.temperature, 'f', 1));
         ui->humValue->setText(QString::number((int)celsiusHumidityValue.humidity));
         ui->illValue->setText(QString::number(luxValue));
+
+        mSensorLogger.append(
+            (double)celsiusHumidityValue.temperature,
+            (int)celsiusHumidityValue.humidity,
+            luxValue
+        );
 
         if (client.isConnected()) {
             client.publishMessage(

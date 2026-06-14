@@ -1,0 +1,28 @@
+/* ----- Bottom navigation bar ----- */
+QWidget#BottomNavBar {
+    background-color: #FFFFFF;
+    border-top: 1px solid #E5E5EA;
+}
+
+QWidget#BottomNavBar QToolButton {
+    background-color: #FFFFFF;
+    border: none;
+    border-top: 2px solid transparent;
+    color: #8E8E93;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 0;
+}
+
+QWidget#BottomNavBar QToolButton:checked {
+    color: #007AFF;
+    border-top: 2px solid #007AFF;
+}
+
+QWidget#BottomNavBar QToolButton:pressed {
+    background-color: #F2F2F7;
+}
+
+QWidget#BottomNavBar QToolButton:focus {
+    outline: none;
+}

@@ -30,25 +30,6 @@
     <number>8</number>
    </property>
    <item>
-    <widget class="QPushButton" name="backButton">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>28</height>
-      </size>
-     </property>
-     <property name="layoutDirection">
-      <enum>Qt::LeftToRight</enum>
-     </property>
-     <property name="text">
-      <string>‹  Settings</string>
-     </property>
-     <property name="flat">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QScrollArea" name="settingsScroll">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -378,7 +359,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="factoryResetButton">
+        <widget class="QPushButton" name="checkUpdatesButton">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -386,7 +367,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Factory reset</string>
+          <string>Check for updates</string>
          </property>
         </widget>
        </item>
@@ -405,19 +386,6 @@
        </item>
       </layout>
      </widget>
-    </widget>
-   </item>
-   <item>
-    <widget class="QPushButton" name="checkUpdatesButton">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>54</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>Check for updates</string>
-     </property>
     </widget>
    </item>
   </layout>

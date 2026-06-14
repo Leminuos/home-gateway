@@ -1,13 +1,27 @@
-# Chọn install set theo slot đang chạy:
-#   đang chạy rootA (mmcblk0p1) → flash vào copy2 (mmcblk0p2 = rootB)
-#   đang chạy rootB (mmcblk0p2) → flash vào copy1 (mmcblk0p1 = rootA)
-rootfs=$(swupdate -g)
+#!/bin/sh
+#
+# 09-swupdate-args — kích hoạt SWUpdate ở chế độ downloader: tải .swu trực tiếp
+# từ URL rồi flash vào slot inactive.
+#
+# Usage: 09-swupdate-args <swu-url>
+#
 
-if [ "$rootfs" = '/dev/mmcblk0p1' ]; then
-	selection="-e stable,copy2"
-else
-	selection="-e stable,copy1"
+set -e
+
+url="$1"
+if [ -z "$url" ]; then
+    echo "usage: $(basename "$0") <swu-url>" >&2
+    exit 2
 fi
 
-SWUPDATE_ARGS="-H @BOARD_NAME@:@HW_REVISION@ ${selection} -f /etc/swupdate.cfg"
-SWUPDATE_WEBSERVER_ARGS="-document_root /www -port 8080"
+# Chọn install set theo slot đang chạy:
+#   đang chạy rootA (mmcblk0p1) -> flash vào copy2 (mmcblk0p2 = rootB)
+#   đang chạy rootB (mmcblk0p2) -> flash vào copy1 (mmcblk0p1 = rootA)
+rootfs=$(swupdate -g)
+if [ "$rootfs" = '/dev/mmcblk0p1' ]; then
+    selection="-e stable,copy2"
+else
+    selection="-e stable,copy1"
+fi
+
+exec swupdate -d "-u $url" -H @BOARD_NAME@:@HW_REVISION@ $selection -f /etc/swupdate.cfg

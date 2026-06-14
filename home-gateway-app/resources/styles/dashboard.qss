@@ -29,18 +29,6 @@ QFrame#headerSeparator {
     border: none;
 }
 
-/* ----- Title row ----- */
-QLabel#dashboardLabel {
-    color: #1C1C1E;
-    font-size: 16px;
-    font-weight: 700;
-}
-
-QLabel#timestampLabel {
-    color: #AEAEB2;
-    font-size: 9px;
-}
-
 /* ----- Sensor cards ----- */
 QFrame#tempCard,
 QFrame#humCard,
@@ -113,31 +101,4 @@ QLabel#illUnit {
     font-size: 10px;
     background: transparent;
     border: none;
-}
-
-/* ----- Settings button ----- */
-QPushButton#settingsButton {
-    background-color: #FFFFFF;
-    border: 1px solid #E5E5EA;
-    border-radius: 10px;
-    color: #1C1C1E;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 8px 12px;
-    text-align: center;
-}
-
-QPushButton#settingsButton:hover {
-    background-color: #F2F2F7;
-    border: 1px solid #D1D1D6;
-}
-
-QPushButton#settingsButton:pressed {
-    background-color: #E5E5EA;
-    color: #007AFF;
-    border: 1px solid #C7C7CC;
-}
-
-QPushButton#settingsButton:focus {
-    outline: none;
 }

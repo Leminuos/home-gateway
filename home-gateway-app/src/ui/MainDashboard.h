@@ -5,6 +5,7 @@
 
 #include "drivers/LightSensor.h"
 #include "drivers/TemperatureHumiditySensor.h"
+#include "logging/SensorLogger.h"
 #include "network/MqttClient.h"
 
 #include <QTimer>
@@ -25,8 +26,10 @@ public:
     int init(const QString &mqttHost, int mqttPort);
     void deinit();
 
+    // Nguồn lịch sử số liệu cảm biến cho ChartDashboard (load + signal).
+    SensorLogger &sensorLogger() { return mSensorLogger; }
+
 signals:
-    void settingsRequested();
     void onlineChanged(bool online);
 
 private:
@@ -37,5 +40,6 @@ private:
     MqttClient client;
     LightSensor mLightSensor;
     TemperatureHumiditySensor mTemperatureHumiditySensor;
+    SensorLogger mSensorLogger;
 };
 #endif // WIDGET_H

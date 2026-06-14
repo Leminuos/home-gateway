@@ -1,0 +1,29 @@
+/* ----- Chart dashboard ----- */
+QWidget#ChartDashboard {
+    background-color: #F2F2F7;
+}
+
+QWidget#scrollContents {
+    background-color: #F2F2F7;
+}
+
+/* ----- Time-range selector (1h / 6h / 24h) ----- */
+QWidget#ChartDashboard QPushButton {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-radius: 8px;
+    color: #3C3C43;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 0;
+}
+
+QWidget#ChartDashboard QPushButton:checked {
+    background-color: #007AFF;
+    border: 1px solid #007AFF;
+    color: #FFFFFF;
+}
+
+QWidget#ChartDashboard QPushButton:focus {
+    outline: none;
+}

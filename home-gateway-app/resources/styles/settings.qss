@@ -31,25 +31,6 @@ QScrollBar::sub-page:vertical {
     height: 0px;
 }
 
-/* ----- Title row ----- */
-QPushButton#backButton {
-    background: transparent;
-    border: none;
-    color: #1C1C1E;
-    font-size: 16px;
-    font-weight: 700;
-    padding: 0px;
-    text-align: left;
-}
-
-QPushButton#backButton:pressed {
-    color: #007AFF;
-}
-
-QPushButton#backButton:focus {
-    outline: none;
-}
-
 /* ----- Common card frame ----- */
 QFrame#brightnessCard,
 QFrame#otaCard,
@@ -205,27 +186,6 @@ QLabel#deviceMacValue {
     font-weight: 600;
     background: transparent;
     border: none;
-}
-
-/* ----- Factory reset button (destructive) ----- */
-QPushButton#factoryResetButton {
-    background-color: #FFFFFF;
-    border: 1px solid #FFB3AB;
-    border-radius: 8px;
-    color: #FF3B30;
-    font-size: 14px;
-    font-weight: 700;
-    padding: 8px 12px;
-    text-align: center;
-}
-
-QPushButton#factoryResetButton:pressed {
-    background-color: #FFE5E2;
-    border: 1px solid #FF3B30;
-}
-
-QPushButton#factoryResetButton:focus {
-    outline: none;
 }
 
 /* ----- Check for updates button (pinned bottom) ----- */

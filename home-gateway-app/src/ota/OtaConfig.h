@@ -8,11 +8,11 @@
 // Thông số kết nối MQTT (host, port) nằm trong MqttSettings.
 namespace OtaConfig {
 
-// webserver của SWUpdate daemon trên BBB — app POST .swu vào đây để flash
-inline QString swupdateUploadUrl()
+// script kích hoạt SWUpdate downloader
+inline QString swupdateDownloadTool()
 {
-    return qEnvironmentVariable("OTA_SWUPDATE_URL",
-                                QStringLiteral("http://127.0.0.1:8080/upload"));
+    return qEnvironmentVariable("OTA_SWUPDATE_TOOL",
+                                QStringLiteral("/usr/bin/09-swupdate-args"));
 }
 
 // socket SWUpdate phát tiến độ install
@@ -26,11 +26,6 @@ inline QString swupdateProgressSocket()
 inline QString currentVersionFile()
 {
     return qEnvironmentVariable("OTA_VERSION_FILE", QStringLiteral("/etc/sw-versions"));
-}
-
-inline QString downloadPath()
-{
-    return qEnvironmentVariable("OTA_DOWNLOAD_PATH", QStringLiteral("/tmp/home-gateway-update.swu"));
 }
 
 // /data/config/ota.json — config OTA do user chỉnh, tồn tại qua OTA + reboot

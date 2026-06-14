@@ -9,22 +9,22 @@ SRC_URI:append = " \
 "
 
 DEPENDS:append = " systemd"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 do_install:append() {
-    install -d ${D}${libdir}/swupdate/conf.d
-    install -m 0644 ${WORKDIR}/09-swupdate-args ${D}${libdir}/swupdate/conf.d/09-swupdate-args
-    sed -i \
-        -e "s#@MACHINE@#${MACHINE}#g" \
-        -e "s#@BOARD_NAME@#${OTA_BOARD_NAME}#g" \
-        -e "s#@HW_REVISION@#${OTA_HW_REVISION}#g" \
-        ${D}${libdir}/swupdate/conf.d/09-swupdate-args
-
     install -d ${D}${sysconfdir}
     install -m 0644 ${WORKDIR}/swupdate.cfg.in ${D}${sysconfdir}/swupdate.cfg
     sed -i "s#@BOARD_NAME@#${OTA_BOARD_NAME}#g" ${D}${sysconfdir}/swupdate.cfg
+
+    install -d ${D}${bindir}
+    install -m 0755 ${WORKDIR}/09-swupdate-args ${D}${bindir}/09-swupdate-args
+    sed -i \
+        -e "s#@BOARD_NAME@#${OTA_BOARD_NAME}#g" \
+        -e "s#@HW_REVISION@#${OTA_HW_REVISION}#g" \
+        ${D}${bindir}/09-swupdate-args
 }
 
 FILES:${PN}:append = " \
     ${sysconfdir}/swupdate.cfg \
-    ${libdir}/swupdate/conf.d/09-swupdate-args \
+    ${bindir}/09-swupdate-args \
 "

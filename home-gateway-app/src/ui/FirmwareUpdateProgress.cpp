@@ -6,7 +6,7 @@
 #include <QStyle>
 
 // Màn hình tiến độ update (view thuần, OtaManager lái).
-// 3 step: Downloading / Verifying / Flashing -> Complete (nút Reboot now).
+// 2 step: Downloading / Flashing -> Complete (nút Reboot now).
 
 namespace {
 
@@ -22,10 +22,9 @@ constexpr const char *kStatePending = "pending";
 constexpr const char *kStateActive  = "active";
 constexpr const char *kStateDone    = "done";
 
-// Thứ tự 3 step dùng để reset hàng loạt về "pending" khi start().
+// Thứ tự 2 step dùng để reset hàng loạt về "pending" khi start().
 const FirmwareUpdateProgress::Phase kStepPhases[] = {
     FirmwareUpdateProgress::PhaseDownloading,
-    FirmwareUpdateProgress::PhaseVerifying,
     FirmwareUpdateProgress::PhaseFlashing,
 };
 
@@ -78,19 +77,10 @@ void FirmwareUpdateProgress::setDownloadProgress(int percent)
     }
 }
 
-void FirmwareUpdateProgress::enterVerify()
-{
-    mPhase = PhaseVerifying;
-    markStep(PhaseDownloading, kStateDone, -1);
-    setPhaseHeader("Verifying...", "Sending to updater");
-    markStep(PhaseVerifying, kStateActive, -1);
-    setActionButton("Cancel", "cancel", /*enabled=*/true);
-}
-
 void FirmwareUpdateProgress::enterFlash()
 {
     mPhase = PhaseFlashing;
-    markStep(PhaseVerifying, kStateDone, -1);
+    markStep(PhaseDownloading, kStateDone, -1);
     setPhaseHeader("Flashing...", "Writing to flash · do not power off");
     markStep(PhaseFlashing, kStateActive, 0);
     // KHÔNG cho Cancel: cắt nguồn lúc này có thể làm hỏng slot đang ghi.
@@ -160,9 +150,6 @@ void FirmwareUpdateProgress::markStep(Phase phase, const QString &state, int pro
     switch (phase) {
     case PhaseDownloading:
         icon = ui->downloadIcon; label = ui->downloadLabel; percent = ui->downloadPercent;
-        break;
-    case PhaseVerifying:
-        icon = ui->verifyIcon;   label = ui->verifyLabel;   percent = ui->verifyPercent;
         break;
     case PhaseFlashing:
         icon = ui->flashIcon;    label = ui->flashLabel;    percent = ui->flashPercent;
