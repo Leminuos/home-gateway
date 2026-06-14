@@ -151,6 +151,43 @@ def make_handler(store):
             self.end_headers()
             self.wfile.write(body)
 
+        def _resolve_release(self):
+            """Trả (path, size) cho /release/<file>.swu hợp lệ, hoặc None."""
+            name = os.path.basename(self.path[len("/release/"):])
+            path = os.path.join(RELEASE_DIR, name)
+            if not name.endswith(".swu") or not os.path.isfile(path):
+                return None
+            return path, os.path.getsize(path)
+
+        def do_HEAD(self):
+            # SWUpdate downloader gửi HEAD trước GET để lấy Content-Length (tổng
+            # kích thước, dùng tính % tải). Phải trả header y như GET, không body.
+            if self.path in ("/manifest.json", "/"):
+                manifest = store.manifest()
+                if manifest is None:
+                    self.send_error(404, "no firmware available")
+                    return
+                body = json.dumps(manifest, indent=2).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                return
+
+            if self.path.startswith("/release/"):
+                resolved = self._resolve_release()
+                if resolved is None:
+                    self.send_error(404, "firmware not found")
+                    return
+                _, size = resolved
+                self.send_response(200)
+                self.send_header("Content-Type", "application/octet-stream")
+                self.send_header("Content-Length", str(size))
+                self.end_headers()
+                return
+
+            self.send_error(404, "not found")
+
         def do_GET(self):
             if self.path in ("/manifest.json", "/"):
                 manifest = store.manifest()
@@ -161,14 +198,14 @@ def make_handler(store):
                 return
 
             if self.path.startswith("/release/"):
-                name = os.path.basename(self.path[len("/release/"):])
-                path = os.path.join(RELEASE_DIR, name)
-                if not name.endswith(".swu") or not os.path.isfile(path):
+                resolved = self._resolve_release()
+                if resolved is None:
                     self.send_error(404, "firmware not found")
                     return
+                path, size = resolved
                 self.send_response(200)
                 self.send_header("Content-Type", "application/octet-stream")
-                self.send_header("Content-Length", str(os.path.getsize(path)))
+                self.send_header("Content-Length", str(size))
                 self.end_headers()
                 with open(path, "rb") as f:
                     while True:

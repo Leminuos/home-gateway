@@ -127,50 +127,6 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="verifyStepLayout">
-     <property name="spacing">
-      <number>10</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="verifyIcon">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="verifyLabel">
-       <property name="text">
-        <string>Verifying</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="verifySpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>16</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QLabel" name="verifyPercent">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
     <layout class="QHBoxLayout" name="flashStepLayout">
      <property name="spacing">
       <number>10</number>

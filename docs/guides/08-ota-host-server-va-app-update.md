@@ -16,9 +16,8 @@ HOST (192.168.137.1)                          BBB
 |  HTTP :8000        |   (GET)              |                                      |
 |   /manifest.json   | -- ota/latest -----> | Auto: xuất hiện popup khi nhận MQTT  |
 |   /release/*.swu   |   (MQTT retained)    |                                      |
-|                    | -- .swu (HTTP)  ---> | Tải về /tmp -> POST cho SWUpdate     |
-+--------------------+                      | daemon flash                         |
-                                            +--------------------------------------+
+|                    | <-- .swu (HTTP) ---- | App đưa URL -> SWUpdate downloader   |
++--------------------+                      +--------------------------------------+
 ```
 
 ---
@@ -110,16 +109,15 @@ cat /etc/sw-versions      # vd: homegateway 0.1.0
 
 ## 6. Màn hình progress update firmware
 
-3 bước: **Downloading -> Verifying -> Flashing**, rồi **Complete**.
-- **Downloading** — tải `.swu` từ host (%, thật). Có thể **Cancel**.
-- **Verifying** — bắt đầu đẩy `.swu` lên SWUpdate daemon `localhost:8080` (daemon parse `sw-description`, check hw-compatible).
-- **Flashing** — daemon ghi vào slot inactive; % thật theo `uploadProgress` (daemon nhận stream theo tốc độ ghi).Không cho Cancel (tránh hỏng slot đang ghi).
+2 bước: **Downloading -> Flashing**, rồi **Complete**. App gọi `09-swupdate-args <url>` → spawn `swupdate -d -u <url>` (one-shot); tiến độ đọc qua socket `/tmp/swupdateprog`.
+- **Downloading** — SWUpdate tự `curl` tải `.swu` từ host (%, thật từ `dwl_percent`). Có thể **Cancel**.
+- **Flashing** — SWUpdate parse `sw-description`, check hw-compatible rồi ghi vào slot inactive; % thật từ `cur_percent`. Không cho Cancel (tránh hỏng slot đang ghi).
 - **Complete** — hiện *"<version> installed"* + nút **Reboot now**.
 
 Theo dõi phía board trong lúc cài:
 
 ```bash
-journalctl -u swupdate -f
+journalctl -t swupdate -f                    # swupdate one-shot ghi log qua syslog
 fw_printenv active_slot ustate boot_count    # sau flash: ustate=1, active_slot đã đổi
 ```
 
@@ -146,8 +144,8 @@ Trên màn Settings, version firmware hiển thị cũng là version mới.
 | Manual check báo *Check failed* | `curl http://<host>:8000/manifest.json` từ board được không? đúng `OTA_MANIFEST_URL`? |
 | Auto không popup | `mosquitto_sub -h <host> -t ota/latest -C 1` có manifest? toggle đang Automatic? version có cao hơn không? |
 | Tải xong báo *Sai sha256* | File trên server hỏng hoặc manifest cũ — server tự tính lại sha256 mỗi lần file đổi, thử restart server |
-| Flashing đứng ở 0% | `journalctl -u swupdate -f` xem daemon có nhận file không; daemon kẹt thì `uploadProgress` không tăng. Hoàn tất vẫn bắt qua `fw_printenv -n ustate` |
-| *Update failed* | Lý do hiển thị trên màn; chi tiết ở `journalctl -u swupdate` (vd hardware mismatch) |
+| Downloading/Flashing đứng ở 0% | `journalctl -t swupdate -f` (swupdate one-shot log qua syslog) xem có tải/ghi không; thử `09-swupdate-args <url>` thủ công trên board để xem lỗi trực tiếp |
+| *Update failed* | Lý do hiển thị trên màn; chi tiết ở `journalctl -t swupdate` (vd hardware mismatch, URL không tải được) |
 | Flash xong không vào slot mới | `fw_printenv active_slot ustate` — `switch-slot.sh` có chạy? |
 
 ---

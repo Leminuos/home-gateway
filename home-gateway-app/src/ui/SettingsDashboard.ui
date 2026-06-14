@@ -378,19 +378,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="factoryResetButton">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>54</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Factory reset</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <spacer name="scrollBottomSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>

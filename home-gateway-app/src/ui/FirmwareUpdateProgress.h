@@ -11,7 +11,7 @@ QT_END_NAMESPACE
 class QLabel;
 
 // Màn hình tiến độ update (view thuần) — OtaManager lái qua các public slot:
-//   start -> Downloading -> Verifying -> Flashing -> complete() -> Complete
+//   start -> Downloading -> Flashing -> complete() -> Complete
 //   (nút Reboot now). fail() gọi được ở mọi phase.
 // Không còn phase Rebooting: flash xong hiện luôn nút Reboot now (SWUpdate
 // reboot-required = false, user chủ động reboot).
@@ -23,7 +23,6 @@ public:
     enum Phase {
         PhaseIdle,
         PhaseDownloading,
-        PhaseVerifying,
         PhaseFlashing,
         PhaseComplete,
         PhaseFailed
@@ -35,14 +34,13 @@ public:
 public slots:
     void start(const QString &targetVersion);  // -> Downloading
     void setDownloadProgress(int percent);
-    void enterVerify();                         // Downloading done -> Verifying
-    void enterFlash();                          // Verifying done -> Flashing
+    void enterFlash();                          // Downloading done -> Flashing
     void setFlashProgress(int percent);
     void complete();                            // Flashing done -> Complete
     void fail(const QString &reason);
 
 signals:
-    void cancelled();        // user huỷ (download/verify) hoặc đóng màn lỗi
+    void cancelled();        // user huỷ (download) hoặc đóng màn lỗi
     void rebootRequested();  // user bấm "Reboot now" ở màn Complete
 
 private:

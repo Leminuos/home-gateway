@@ -126,8 +126,6 @@ int main(int argc, char *argv[])
     // ---- OtaManager tiến độ -> FirmwareUpdateProgress ----------------------
     QObject::connect(ota, &OtaManager::downloadPercent,
                      progress, &FirmwareUpdateProgress::setDownloadProgress);
-    QObject::connect(ota, &OtaManager::phaseVerify,
-                     progress, &FirmwareUpdateProgress::enterVerify);
     QObject::connect(ota, &OtaManager::phaseFlash,
                      progress, &FirmwareUpdateProgress::enterFlash);
     QObject::connect(ota, &OtaManager::flashPercent,

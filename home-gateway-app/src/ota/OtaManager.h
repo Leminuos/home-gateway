@@ -1,8 +1,8 @@
 #ifndef OTAMANAGER_H
 #define OTAMANAGER_H
 
-#include <QFile>
 #include <QObject>
+#include <QProcess>
 #include <QString>
 #include <QTimer>
 
@@ -17,10 +17,6 @@ class QNetworkReply;
 QT_END_NAMESPACE
 
 // Điều phối luồng OTA pull-model. KHÔNG đụng UI — chỉ phát signal cho main.cpp.
-//
-// Phát hiện: AUTO = MQTT retained push; MANUAL = checkForUpdate() HTTP GET.
-// Cài (confirmUpdate): tải .swu (HTTP) -> POST localhost:8080 -> daemon flash
-// (tiến độ từ SwupdateProgressClient, fallback poll ustate) -> Reboot now.
 class OtaManager : public QObject
 {
     Q_OBJECT
@@ -39,7 +35,7 @@ public:
 public slots:
     void setAutoMode(bool autoMode);
     void checkForUpdate(bool fromUser = true);  // fromUser=false: auto poll, không emit upToDate/checkFailed
-    void confirmUpdate();    // user bấm "Update now": tải + cài
+    void confirmUpdate();    // user bấm "Update now": giao URL cho SWUpdate tải + cài
     void cancel();           // huỷ tải/cài, về idle
     void reboot();           // user bấm "Reboot now"
 
@@ -56,7 +52,6 @@ signals:
     // Tiến độ cài đặt (lái FirmwareUpdateProgress)
     void phaseDownload();
     void downloadPercent(int percent);
-    void phaseVerify();
     void phaseFlash();
     void flashPercent(int percent);
     void phaseComplete();
@@ -66,11 +61,8 @@ private:
     void onMqttConnected();
     void onMqttMessage(const QString &topic, const QByteArray &payload);
     void onManifestFinished();
-    void onDownloadFinished();
-    void startInstall();
-    void onUploadProgress(qint64 sent, qint64 total);
-    void onUploadFinished();
-    void pollUstate();
+    void onFlashProgress(int percent);
+    void onInstallFinished(int exitCode, QProcess::ExitStatus status);
     void concludeSuccess();
     void concludeFailure(const QString &reason);
     void resetInstallState();
@@ -81,6 +73,7 @@ private:
     QNetworkAccessManager *mNet;
     MqttClient mMqtt;
     SwupdateProgressClient mSwu;
+    QProcess mInstallProc;   // swupdate downloader one-shot
 
     FirmwareManifest mLatest;
     OtaSettings mSettings;
@@ -88,14 +81,11 @@ private:
     bool mAutoMode;
 
     QNetworkReply *mManifestReply;
-    QNetworkReply *mDownloadReply;
-    QNetworkReply *mUploadReply;
-    QFile mDownloadFile;
 
     bool mEnteredFlash;
+    int mFlashPctMax;        // % flash cao nhất đã hiển thị (giữ thanh chỉ tăng)
     bool mInstallConcluded;
     bool mManifestFromUser;  // phân biệt request từ user (true) hay auto poll (false)
-    QTimer mUstatePoller;    // fallback phát hiện hoàn tất qua U-Boot env
     QTimer mAutoPoller;      // HTTP poll định kỳ khi ở chế độ auto
 };
 

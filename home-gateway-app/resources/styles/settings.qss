@@ -207,27 +207,6 @@ QLabel#deviceMacValue {
     border: none;
 }
 
-/* ----- Factory reset button (destructive) ----- */
-QPushButton#factoryResetButton {
-    background-color: #FFFFFF;
-    border: 1px solid #FFB3AB;
-    border-radius: 8px;
-    color: #FF3B30;
-    font-size: 14px;
-    font-weight: 700;
-    padding: 8px 12px;
-    text-align: center;
-}
-
-QPushButton#factoryResetButton:pressed {
-    background-color: #FFE5E2;
-    border: 1px solid #FF3B30;
-}
-
-QPushButton#factoryResetButton:focus {
-    outline: none;
-}
-
 /* ----- Check for updates button (pinned bottom) ----- */
 QPushButton#checkUpdatesButton {
     background-color: #FFFFFF;
