@@ -1,7 +1,9 @@
+/assets/tmp
+
 # Thư mục release  — không commit
 /release/
 /tools/ota-server/manifest.json
 
-# Python bytecode cache (tự sinh)
+# Python bytecode cache
 __pycache__/
 *.pyc
