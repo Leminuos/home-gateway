@@ -28,7 +28,6 @@ public slots:
     void onCheckFinished(const QString &resultText);
 
 signals:
-    void backRequested();
     void otaAutoModeChanged(bool autoMode);  // toggle Auto/Manual
     void checkForUpdateRequested();          // nút "Check for updates"
 

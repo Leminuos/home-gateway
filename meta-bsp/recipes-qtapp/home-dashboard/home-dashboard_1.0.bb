@@ -11,7 +11,7 @@ S = "${WORKDIR}/home-gateway-app"
 
 inherit cmake_qt5 systemd
 
-DEPENDS += " qtbase qtdeclarative qtsvg libgpiod mosquitto"
+DEPENDS += " qtbase qtdeclarative qtsvg qtcharts libgpiod mosquitto"
 
 SYSTEMD_SERVICE:${PN} = "home-dashboard.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"

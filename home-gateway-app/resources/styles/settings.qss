@@ -31,25 +31,6 @@ QScrollBar::sub-page:vertical {
     height: 0px;
 }
 
-/* ----- Title row ----- */
-QPushButton#backButton {
-    background: transparent;
-    border: none;
-    color: #1C1C1E;
-    font-size: 16px;
-    font-weight: 700;
-    padding: 0px;
-    text-align: left;
-}
-
-QPushButton#backButton:pressed {
-    color: #007AFF;
-}
-
-QPushButton#backButton:focus {
-    outline: none;
-}
-
 /* ----- Common card frame ----- */
 QFrame#brightnessCard,
 QFrame#otaCard,

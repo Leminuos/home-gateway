@@ -13,7 +13,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR}/src/ui)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Network Charts REQUIRED)
 
 file(GLOB_RECURSE SRC_FILES
   "${CMAKE_SOURCE_DIR}/src/*.cpp"
@@ -26,6 +26,8 @@ set(UI_FILES
   ${CMAKE_SOURCE_DIR}/src/ui/FirmwareUpdatePopup.ui
   ${CMAKE_SOURCE_DIR}/src/ui/FirmwareUpdateProgress.ui
   ${CMAKE_SOURCE_DIR}/src/ui/StatusHeader.ui
+  ${CMAKE_SOURCE_DIR}/src/ui/ChartDashboard.ui
+  ${CMAKE_SOURCE_DIR}/src/ui/BottomNavBar.ui
 )
 
 set(QRC_FILES
@@ -47,7 +49,7 @@ else()
 endif()
 
 find_library(MOSQUITTO_LIB mosquitto PATHS ${CMAKE_SYSROOT}/usr/lib)
-target_link_libraries(home-gateway-app PRIVATE Qt5::Widgets Qt5::Network ${MOSQUITTO_LIB})
+target_link_libraries(home-gateway-app PRIVATE Qt5::Widgets Qt5::Network Qt5::Charts ${MOSQUITTO_LIB})
 target_include_directories(home-gateway-app PRIVATE
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/ui

@@ -19,8 +19,10 @@ home-gateway-app/
 ├── src/
 │   ├── main.cpp                # entrypoint: dựng UI, khởi tạo OtaManager, nối signal
 │   ├── ui/                     # các Screen + shared widget (.h/.cpp/.ui)
-│   │   ├── MainDashboard.*     # class Widget — màn chính: đọc sensor, publish MQTT
+│   │   ├── MainDashboard.*     # class Widget — tab Home: đọc sensor, publish MQTT
+│   │   ├── ChartDashboard.*    # tab Dashboard — 3 chart Qt Charts (1h/6h/24h)
 │   │   ├── SettingsDashboard.* # SettingsWidget — backlight + chế độ OTA + version
+│   │   ├── BottomNavBar.*      # shared widget — nav bar Home/Dashboard/Settings
 │   │   ├── StatusHeader.*      # shared widget — chỉ báo online/offline
 │   │   ├── FirmwareUpdateProgress.*  # màn tiến độ update (download -> flash -> done)
 │   │   └── FirmwareUpdatePopup.*     # popup version mới
@@ -44,7 +46,7 @@ home-gateway-app/
 
 ## Thành phần theo thư mục
 
-- **`src/main.cpp`** — Dựng `QWidget` root cố định 240×320 gồm `StatusHeader` + `QStackedWidget` (3 screen: MainDashboard, SettingsDashboard, FirmwareUpdateProgress). `FirmwareUpdatePopup` là overlay phủ toàn màn (con trực tiếp của root). Tạo `OtaManager` và nối toàn bộ signal/slot giữa UI <-> OTA tại đây — main là nơi điều phối, các widget không biết nhau.
+- **`src/main.cpp`** — Dựng `QWidget` root cố định 240×320 gồm `StatusHeader` (trên) + `QStackedWidget` (giữa, 4 screen: MainDashboard/Home, ChartDashboard, SettingsDashboard, FirmwareUpdateProgress) + `BottomNavBar` (dưới). `FirmwareUpdatePopup` là overlay phủ toàn màn (con trực tiếp của root). Tạo `OtaManager` và nối toàn bộ signal/slot giữa UI <-> OTA tại đây — main là nơi điều phối, các widget không biết nhau.
 - **`src/ui/`** — Tầng giao diện (Qt Widgets + Qt Designer). Mỗi Screen là một `QWidget` có file `.ui` riêng:
   - **MainDashboard**: mỗi 3s đọc sensor, cập nhật label và publish `sensor/temp` · `sensor/humi` · `sensor/lux` (retained); hiện thị trạng thái online/offline theo trạng thái MQTT.
   - **SettingsDashboard**: slider điều chỉnh backlight, toggle OTA Auto/Manual, hiện thị version hiện tại, nút nhấn *Check for updates*.
@@ -62,7 +64,7 @@ home-gateway-app/
 ## Luồng chính
 
 - **Sensor -> MQTT:** `MainDashboard` timer 3s -> đọc I2C -> cập nhật UI + publish `sensor/*` (retained) nếu đang connected.
-- **Điều hướng:** Dashboard ⇄ Settings qua `QStackedWidget`; popup OTA nổi trên mọi screen.
+- **Điều hướng:** `BottomNavBar` chuyển giữa Home / Dashboard / Settings qua `QStackedWidget` (ẩn khi đang OTA); popup OTA nổi trên mọi screen.
 - **OTA:** `OtaManager` phát `updateAvailable` -> popup -> user xác nhận -> chuyển sang `FirmwareUpdateProgress`, `OtaManager` tải + cài và phát tiến độ -> xong hiện *Reboot now* -> `OtaManager::reboot()`.
 
 ---

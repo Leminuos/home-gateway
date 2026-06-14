@@ -19,6 +19,7 @@ Log các thay đổi lớn kèm giải thích ("cái gì đã thay đổi và v�
 | [0011-app-settings-json.md](0011-app-settings-json.md) | Thêm setting.json + class AppSettings lưu cấu hình home-dashboard (độ sáng), tồn tại qua reboot/OTA |
 | [0012-ota-swupdate-downloader.md](0012-ota-swupdate-downloader.md) | OTA đưa URL trực tiếp cho SWUpdate downloader (one-shot) thay cho tải `.swu` về /tmp + upload webserver; tắt webserver daemon |
 | [0013-sensor-csv-logging.md](0013-sensor-csv-logging.md) | Log số liệu cảm biến (nhiệt độ/độ ẩm/ánh sáng) ra CSV trên /data qua class SensorLogger |
+| [0014-bottom-nav-and-chart-dashboard.md](0014-bottom-nav-and-chart-dashboard.md) | Bottom navigation bar (Home/Dashboard/Settings) + màn Dashboard chart Qt Charts có chọn khoảng thời gian; mở rộng SensorLogger làm nguồn lịch sử |
 
 ## Phân nhóm theo chủ đề
 
@@ -45,3 +46,4 @@ Log các thay đổi lớn kèm giải thích ("cái gì đã thay đổi và v�
 - [0011-app-settings-json.md](0011-app-settings-json.md)
 - [0012-ota-swupdate-downloader.md](0012-ota-swupdate-downloader.md)
 - [0013-sensor-csv-logging.md](0013-sensor-csv-logging.md)
+- [0014-bottom-nav-and-chart-dashboard.md](0014-bottom-nav-and-chart-dashboard.md)

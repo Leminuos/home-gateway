@@ -1,8 +1,6 @@
 #include "MainDashboard.h"
 #include "./ui_MainDashboard.h"
 
-#include <QPushButton>
-
 #define LIGHT_SENSOR_DEVICE_PATH                "/dev/i2c-1"
 #define LIGHT_SENSOR_DEVICE_ADDRESS             0x23
 
@@ -14,9 +12,6 @@ Widget::Widget(QWidget *parent)
     , ui(new Ui::Widget)
 {
     ui->setupUi(this);
-
-    QObject::connect(ui->settingsButton, &QPushButton::clicked,
-                     this, &Widget::settingsRequested);
 }
 
 Widget::~Widget()

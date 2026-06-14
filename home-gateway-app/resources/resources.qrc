@@ -5,9 +5,13 @@
         <file>styles/settings.qss</file>
         <file>styles/firmware_popup.qss</file>
         <file>styles/firmware_progress.qss</file>
+        <file>styles/bottomnav.qss</file>
+        <file>styles/chart.qss</file>
         <file>icons/temperature.png</file>
         <file>icons/humidity.png</file>
         <file>icons/sun.png</file>
         <file>icons/settings.png</file>
+        <file>icons/home.png</file>
+        <file>icons/dashboard.png</file>
     </qresource>
 </RCC>

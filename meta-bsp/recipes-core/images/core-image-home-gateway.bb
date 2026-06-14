@@ -8,7 +8,7 @@ IMAGE_INSTALL:append = " \
     libmosquitto1 \
     libgpiod-tools libgpiod \
     ttf-dejavu-sans fontconfig \
-    qtbase \
+    qtbase qtcharts \
     home-dashboard bbb-static-ip \
 "
 

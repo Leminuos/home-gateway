@@ -59,8 +59,6 @@ SettingsWidget::SettingsWidget(QWidget *parent)
 
     scroller->setScrollerProperties(props);
 
-    QObject::connect(ui->backButton, &QPushButton::clicked,
-                     this, &SettingsWidget::backRequested);
     QObject::connect(ui->brightnessSlider, &QSlider::valueChanged,
                      this, &SettingsWidget::onBrightnessChanged);
     QObject::connect(ui->brightnessSlider, &QSlider::sliderReleased,

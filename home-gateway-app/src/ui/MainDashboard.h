@@ -26,8 +26,10 @@ public:
     int init(const QString &mqttHost, int mqttPort);
     void deinit();
 
+    // Nguồn lịch sử số liệu cảm biến cho ChartDashboard (load + signal).
+    SensorLogger &sensorLogger() { return mSensorLogger; }
+
 signals:
-    void settingsRequested();
     void onlineChanged(bool online);
 
 private:
