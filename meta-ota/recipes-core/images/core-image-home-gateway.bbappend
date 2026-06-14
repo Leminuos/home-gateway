@@ -13,7 +13,7 @@ WKS_FILE = "bbb-ota.wks"
 IMAGE_FSTYPES = " wic wic.bmap ext4.gz"
 
 # Rootfs mount read-only
-IMAGE_FEATURES:append = " read-only-rootfs"
+# IMAGE_FEATURES:append = " read-only-rootfs"
 
 do_image_wic[depends] += "virtual/bootloader:do_deploy data-partition:do_deploy"
 
