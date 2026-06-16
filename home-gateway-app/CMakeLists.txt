@@ -48,6 +48,10 @@ else()
   )
 endif()
 
+if(PRODUCTION_BUILD)
+  target_compile_definitions(home-gateway-app PRIVATE QT_NO_DEBUG_OUTPUT)
+endif()
+
 find_library(MOSQUITTO_LIB mosquitto PATHS ${CMAKE_SYSROOT}/usr/lib)
 target_link_libraries(home-gateway-app PRIVATE Qt5::Widgets Qt5::Network Qt5::Charts ${MOSQUITTO_LIB})
 target_include_directories(home-gateway-app PRIVATE

@@ -10,8 +10,15 @@
 static const char *kCsvHeader = "timestamp,temperature,humidity,lux\n";
 
 // Lấy mẫu cho chart: tối thiểu 60s/mẫu, giữ tối đa 24h (1 mẫu/phút -> 1440).
+// Nhịp ghi do timer đọc (1/phút) quyết định; load() chỉ downsample khi nạp lại
+// lịch sử. kIntervalSlackSec: dung sai jitter (60s thực tế có thể là 59s) để
+// load() không rớt mẫu hợp lệ.
 static const qint64 kMinIntervalSec = 60;
+static const qint64 kIntervalSlackSec = 5;
 static const int kMaxSamples = 24 * 60;
+
+// Rotation file CSV: vượt ngưỡng -> xoay sang ".1" (giữ 1 backup).
+static const qint64 kMaxBytes = 2 * 1024 * 1024;
 
 SensorLogger::SensorLogger(QObject *parent, const QString &path)
     : QObject(parent)
@@ -79,8 +86,8 @@ void SensorLogger::load()
         if (t <= 0 || t < cutoff) {
             continue; // bỏ mẫu quá cũ (ngoài cửa sổ 24h)
         }
-        // Downsample: chỉ giữ khi cách mẫu trước >= 60s.
-        if (!mSamples.isEmpty() && t - mSamples.last().t < kMinIntervalSec) {
+        // Downsample: chỉ giữ khi cách mẫu trước >= ~60s (trừ dung sai jitter).
+        if (!mSamples.isEmpty() && t - mSamples.last().t < kMinIntervalSec - kIntervalSlackSec) {
             continue;
         }
 
@@ -99,6 +106,10 @@ void SensorLogger::load()
 
 bool SensorLogger::append(double temperature, int humidity, int lux)
 {
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+
+    rotateIfNeeded();
+
     if (!ensureReady()) {
         return false;
     }
@@ -109,8 +120,6 @@ bool SensorLogger::append(double temperature, int humidity, int lux)
         return false;
     }
 
-    const qint64 now = QDateTime::currentSecsSinceEpoch();
-
     QTextStream out(&f);
     out << QDateTime::fromSecsSinceEpoch(now).toString(Qt::ISODate) << ','
         << QString::number(temperature, 'f', 1) << ','
@@ -118,12 +127,24 @@ bool SensorLogger::append(double temperature, int humidity, int lux)
         << lux << '\n';
     f.close();
 
-    // Nạp vào buffer chart theo nhịp 1/phút.
-    if (mSamples.isEmpty() || now - mSamples.last().t >= kMinIntervalSec) {
-        pushSample(now, temperature, humidity, lux);
+    pushSample(now, temperature, humidity, lux);
+    return true;
+}
+
+void SensorLogger::rotateIfNeeded()
+{
+    if (!QFileInfo::exists(mPath) || QFileInfo(mPath).size() < kMaxBytes) {
+        return;
     }
 
-    return true;
+    const QString backup = mPath + QStringLiteral(".1");
+    QFile::remove(backup);
+    if (!QFile::rename(mPath, backup)) {
+        qWarning() << "SensorLogger: cannot rotate" << mPath;
+        return;
+    }
+
+    mReady = false;
 }
 
 void SensorLogger::pushSample(qint64 t, double temp, int humi, int lux)

@@ -13,6 +13,8 @@ inherit cmake_qt5 systemd
 
 DEPENDS += " qtbase qtdeclarative qtsvg qtcharts libgpiod mosquitto"
 
+EXTRA_OECMAKE += "${@'-DPRODUCTION_BUILD=ON' if d.getVar('DEVELOPMENT_BUILD') != '1' else '-DPRODUCTION_BUILD=OFF'}"
+
 SYSTEMD_SERVICE:${PN} = "home-dashboard.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 

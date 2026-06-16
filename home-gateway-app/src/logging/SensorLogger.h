@@ -7,12 +7,8 @@
 
 // Ghi log số liệu cảm biến (nhiệt độ, độ ẩm, ánh sáng) ra file CSV trên
 // partition /data để tồn tại qua reboot/OTA. Mặc định /data/logs/sensors.csv,
-// override qua env SENSOR_LOG_FILE.
-//
-// Ngoài việc ghi CSV (mỗi lần append), logger còn giữ một buffer trong RAM lấy
-// mẫu thưa (1 mẫu/phút, cap 24h gần nhất) làm nguồn dữ liệu cho ChartDashboard:
-// load() đọc lại lịch sử từ CSV, samples() trả buffer, sampleAdded() báo có mẫu
-// mới được đưa vào buffer.
+// override qua env SENSOR_LOG_FILE. File được xoay vòng khi vượt ngưỡng kích
+// thước để không phình vô hạn.
 class SensorLogger : public QObject
 {
     Q_OBJECT
@@ -28,11 +24,11 @@ public:
 
     explicit SensorLogger(QObject *parent = nullptr, const QString &path = QString());
 
-    // Đọc lại lịch sử từ CSV vào buffer RAM (downsample >=60s, giữ <=24h).
+    // Đọc lại lịch sử từ CSV vào buffer RAM.
     void load();
 
-    // Ghi 1 dòng CSV; đồng thời nạp vào buffer chart nếu đã qua >=60s kể từ mẫu
-    // trước (kèm phát sampleAdded).
+    // Ghi 1 dòng CSV + nạp vào buffer chart.
+    // Tự xoay vòng file khi vượt ngưỡng kích thước.
     bool append(double temperature, int humidity, int lux);
 
     const QVector<Sample> &samples() const { return mSamples; }
@@ -42,6 +38,7 @@ signals:
 
 private:
     bool ensureReady();
+    void rotateIfNeeded();
     void pushSample(qint64 t, double temp, int humi, int lux);
 
     QString mPath;
