@@ -1,0 +1,14 @@
+[Unit]
+Description=Redirect and flush systemd journal to /data
+After=data.mount
+Requires=data.mount
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/mkdir -p /data/journal
+ExecStart=/bin/ln -sfn /data/journal /var/log/journal
+ExecStart=/bin/journalctl --flush
+
+[Install]
+WantedBy=multi-user.target

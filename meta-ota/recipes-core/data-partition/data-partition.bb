@@ -23,11 +23,13 @@ DATA_PARTITION_SIZE_KiB = "131072"
 do_compile[cleandirs] = "${WORKDIR}/data-root"
 
 do_compile() {
+    install -d ${WORKDIR}/data-root/journal
+    
     install -d ${WORKDIR}/data-root/config
     install -m 0644 ${WORKDIR}/mqtt.json    ${WORKDIR}/data-root/config/mqtt.json
     install -m 0644 ${WORKDIR}/ota.json     ${WORKDIR}/data-root/config/ota.json
     install -m 0644 ${WORKDIR}/setting.json ${WORKDIR}/data-root/config/setting.json
-
+    
     mke2fs -t ext4 -L data \
            -d ${WORKDIR}/data-root \
            ${WORKDIR}/data-home-gateway.ext4 \

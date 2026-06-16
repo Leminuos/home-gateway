@@ -7,6 +7,7 @@ IMAGE_INSTALL:append = " \
     libubootenv-bin      \
     ota-confirm-boot     \
     data-partition       \
+    journald-persistent  \
 "
 
 WKS_FILE = "bbb-ota.wks"

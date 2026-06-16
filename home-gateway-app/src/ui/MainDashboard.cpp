@@ -95,7 +95,7 @@ int Widget::init(const QString &mqttHost, int mqttPort)
         }
     });
 
-    mReadSensorDataTimer.start(3000);
+    mReadSensorDataTimer.start(60000);
 
     client.connectToHost(mqttHost, mqttPort, 60);
     
