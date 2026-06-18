@@ -1,10 +1,10 @@
-# Secure Boot — U-Boot Verified Boot
+# Secure Boot — Verified Boot + signed SWU
 
 ## Tổng quan
 
-Secure Boot trong dự án này hiện triển khai **U-Boot Verified Boot**. dm-verity chưa được triển khai.
+Secure Boot trong dự án này gồm **U-Boot Verified Boot** cho boot chain và **SWUpdate signed `.swu`** cho OTA package. dm-verity chưa được triển khai.
 
-Mục tiêu: U-Boot từ chối boot kernel nếu FIT image không có chữ ký RSA hợp lệ, ngăn chặn attacker thay kernel/dtb trên thiết bị.
+Mục tiêu: U-Boot từ chối boot kernel nếu FIT image không có chữ ký RSA hợp lệ và SWUpdate từ chối cài `.swu` nếu descriptor không có chữ ký CMS hợp lệ hoặc payload/script không khớp hash.
 
 Tính năng được kiểm soát qua `DISTRO_FEATURES`:
 - **Bật** (mặc định cho prod): `secure-boot` có trong `DISTRO_FEATURES`
@@ -13,6 +13,8 @@ Tính năng được kiểm soát qua `DISTRO_FEATURES`:
 ---
 
 ## Nguyên lý hoạt động
+
+### Verified Boot
 
 **Luồng boot khi `secure-boot` bật:**
 
@@ -27,6 +29,20 @@ Tính năng được kiểm soát qua `DISTRO_FEATURES`:
 
 Bước 4–6 thay bằng `ext4load zImage + am335x-boneblack.dtb` -> `bootz` — không xác minh chữ ký.
 
+### Signed SWU
+
+**Luồng OTA khi `secure-boot` bật:**
+
+1. `update-image.bb` render `sw-description` với `sha256 = "$swupdate_get_sha256(...)"` cho rootfs image và `switch-slot.sh`
+2. `swupdate.bbclass` ký `sw-description` bằng CMS/X.509, dùng `${TOPDIR}/keys/dev.key` và `${TOPDIR}/keys/dev.crt`
+3. Image cài SWUpdate có `CONFIG_SIGNED_IMAGES=y`, `CONFIG_SIGALG_CMS=y` và `/etc/swupdate/swupdate.pem`
+4. Khi app gọi `swupdate -d -u <url>`, SWUpdate tải `.swu`, verify chữ ký CMS của descriptor bằng `/etc/swupdate/swupdate.pem`, rồi verify hash SHA256 của payload/script
+5. Nếu verify OK -> flash slot inactive; nếu chữ ký/hash sai -> abort trước khi ghi slot
+
+**Luồng OTA khi `secure-boot` tắt:**
+
+`SWUPDATE_SIGNING` rỗng, SWUpdate không thêm config signed-images, `swupdate.cfg` không khai báo `public-key-file`; `.swu` không bắt buộc có chữ ký.
+
 ---
 
 ## Thành phần kỹ thuật
@@ -40,9 +56,9 @@ FIT (Flattened Image Tree) là format image của U-Boot, đóng gói `kernel` (
 | File | Nội dung | Lưu trữ |
 |---|---|---|
 | `${TOPDIR}/keys/dev.key` | Private key RSA2048 — ký FIT | Máy build, **không commit vào repo** |
-| `${TOPDIR}/keys/dev.crt` | Public key (X.509) — inject vào u-boot.dtb | Máy build |
+| `${TOPDIR}/keys/dev.crt` | Public key (X.509) — inject vào u-boot.dtb và cài vào `/etc/swupdate/swupdate.pem` | Máy build + target rootfs |
 
-Thuật toán: SHA256 + RSA2048 (`FIT_SIGN_ALG = "rsa2048"`, `FIT_HASH_ALG = "sha256"`).
+Thuật toán boot image: SHA256 + RSA2048 (`FIT_SIGN_ALG = "rsa2048"`, `FIT_HASH_ALG = "sha256"`). Thuật toán OTA package: CMS/X.509 với cùng key/cert, cộng hash SHA256 cho từng artifact trong `sw-description`.
 
 Khi `FIT_GENERATE_KEYS = "1"` (mặc định khi `secure-boot` bật), Yocto tự sinh key vào `${TOPDIR}/keys/` nếu chưa có. Với production, sinh key một lần, backup private key ở nơi an toàn, set `FIT_GENERATE_KEYS = "0"` để Yocto không tự sinh đè.
 
@@ -60,6 +76,20 @@ Hai chế độ boot được bake vào U-Boot binary qua patch riêng:
 | `secure-boot` bật | `0001-bbb-ota-secure-boot.patch` | `ext4load fitImage` | `bootm` |
 
 Cả hai patch đều chứa đầy đủ OTA env (ota_check_rollback, ota_pick_slot, ota_load_kernel, ota_boot) — chỉ khác nhau ở phần load/boot command.
+
+### SWUpdate signing config
+
+`meta-ota/recipes-extended/images/update-image.bb` bật ký `.swu` theo `DISTRO_FEATURES`:
+
+```bitbake
+SWUPDATE_SIGNING = "${@bb.utils.contains('DISTRO_FEATURES', 'secure-boot', 'CMS', '', d)}"
+SWUPDATE_CMS_KEY  = "${TOPDIR}/keys/dev.key"
+SWUPDATE_CMS_CERT = "${TOPDIR}/keys/dev.crt"
+```
+
+`meta-ota/recipes-support/swupdate/swupdate_%.bbappend` chỉ thêm `signed-images.cfg`, copy certificate vào `/etc/swupdate/swupdate.pem`, và render `public-key-file` trong `/etc/swupdate.cfg` khi `secure-boot` bật. Nhờ đó dev mode không bị buộc verify `.swu`, còn production mode dùng cùng root of trust với Verified Boot.
+
+Lưu ý: `signed-images.cfg` phải được append vào `${WORKDIR}/defconfig` trước `do_configure`; chỉ thêm file vào `SRC_URI` mới làm file xuất hiện trong `${WORKDIR}`, chưa làm SWUpdate bật `CONFIG_SIGNED_IMAGES`. Dòng `public-key-file` trong `swupdate.cfg` là runtime config để binary biết dùng certificate nào, nhưng binary chỉ hiểu và thực thi verify chữ ký nếu build-time config đã bật signed-images/CMS.
 
 ---
 
@@ -110,6 +140,16 @@ virtual/bootloader:do_concat_dtb  (uboot-sign.bbclass)
 
 core-image-home-gateway:do_image_wic
     └─ MLO + u-boot.img + u-boot-env.raw + rootfs (có /boot/fitImage)
+
+swupdate:do_configure / do_install
+    ├─ append signed-images.cfg vào defconfig
+    ├─ install keys/dev.crt -> /etc/swupdate/swupdate.pem
+    └─ render public-key-file trong /etc/swupdate.cfg
+
+update-image:do_swuimage
+    ├─ render sw-description có sha256 cho rootfs ext4.gz + switch-slot.sh
+    ├─ sign sw-description bằng CMS với keys/dev.key/dev.crt
+    └─ pack sw-description + signature + rootfs ext4.gz + switch-slot.sh -> .swu
 ```
 
 ---
@@ -118,3 +158,4 @@ core-image-home-gateway:do_image_wic
 
 - **dm-verity chưa triển khai**: rootfs có thể bị sửa trực tiếp trên block device sau khi boot. U-Boot Verified Boot chỉ bảo vệ quá trình khởi động.
 - **U-Boot không được bảo vệ ở ROM level**: Kẻ tấn công có thể thay `u-boot.img` trên MMC bằng bản không có public key. Bảo vệ hoàn toàn cần AM335x Secure Boot ở ROM (fusing) — ngoài phạm vi dự án hiện tại.
+- **Sign `.swu` chỉ bảo vệ package trước khi cài**: nếu attacker đã có quyền ghi block device trực tiếp trên thiết bị sau khi boot, signed `.swu` không thay thế dm-verity hoặc cơ chế chống sửa rootfs runtime.

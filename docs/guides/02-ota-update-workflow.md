@@ -1,13 +1,13 @@
 # OTA update workflow end-to-end
 
-Hướng dẫn này mô ta chu trình OTA hoàn chỉnh: build file `.swu` mới, upload qua web UI, quan sát board reboot sang slot mới, và verify update đã commit (hoặc rollback).
+Hướng dẫn này mô tả chu trình OTA hoàn chỉnh: build file `.swu` mới, cài bằng SWUpdate downloader, quan sát board reboot sang slot mới, và verify update đã commit hoặc rollback. Luồng UI/app hiện tại dùng pull-model qua host server; xem thêm [08-ota-host-server-va-app-update.md](08-ota-host-server-va-app-update.md).
 
 ---
 
 ## 1. Chuẩn bị
 
-- Board đã được flash lần đầu theo và đang chạy ở slot A.
-- Build host vẫn còn `build/` directory đã setup ở cùng guide.
+- Board đã được flash lần đầu và đang chạy ở slot A.
+- Build host vẫn còn `build/` directory đã setup.
 - Biết IP của board, check bằng `ip addr` trên board.
 
 Verify state ban đầu trên board:
@@ -21,19 +21,15 @@ fw_printenv active_slot ustate boot_count boot_limit
 # boot_count=0
 # boot_limit=3
 
-# 2. SWUpdate service đang chạy
-systemctl status swupdate
-# Active: active (running)
+# 2. SWUpdate package + downloader script đã có
+which swupdate
+which 09-swupdate-args
 
-# 3. Web UI accessible
-curl -s http://localhost:8080/ | head -5
-# HTML của SWUpdate webserver
-
-# 4. ota-confirm-boot đã chạy thành công (oneshot)
+# 3. ota-confirm-boot đã chạy thành công (oneshot)
 systemctl status ota-confirm-boot
 # Active: active (exited)
 
-# 5. Version metadata
+# 4. Version metadata
 cat /etc/sw-versions  /etc/hwrevision
 ```
 
@@ -56,7 +52,7 @@ bitbake update-image
 Output ở `tmp/deploy/images/bbb-home-gateway/`:
 
 ```
-update-image-bbb-home-gateway-0.2.0.swu      ◄── file để upload
+update-image-bbb-home-gateway-0.2.0.swu      ◄── file để cài
 update-image-bbb-home-gateway.swu            ◄── symlink tới file trên
 ```
 
@@ -70,48 +66,50 @@ cpio -t < update-image-bbb-home-gateway.swu
 # switch-slot.sh
 ```
 
+Khi `secure-boot` bật, `sw-description` được ký CMS/X.509 và descriptor có hash SHA256 cho rootfs image + `switch-slot.sh`. Có thể kiểm tra package có chữ ký bằng:
+
+```bash
+cpio -t < update-image-bbb-home-gateway.swu | grep -E 'sw-description|sig'
+```
+
 ---
 
-## 3. Upload qua web UI
+## 3. Cài qua SWUpdate downloader
 
-Mở trình duyệt → `http://<board-ip>:8080`.
+Đưa file `.swu` lên một HTTP server mà BBB truy cập được. Với luồng app hiện tại, `tools/ota-server/ota_server.py` phục vụ file trong thư mục `release/` ở port 8000 và publish manifest cho app.
 
-Giao diện SWUpdate webserver (page mặc định của `swupdate-www` package):
+Ví dụ test nhanh từ host:
 
-```
-+----------------------------------------+
-|          SWUpdate Web Server           |
-+----------------------------------------+
-|                                        |
-|  [ Drag .swu file here or click ]      |
-|                                        |
-|  Progress: [          ] 0%             |
-|                                        |
-|  Status: Idle                          |
-+----------------------------------------+
+```bash
+cd tools/ota-server
+python3 ota_server.py
+cp /path/to/tmp/deploy/images/bbb-home-gateway/update-image-bbb-home-gateway-0.2.0.swu ../../release/
 ```
 
-Kéo thả file `update-image-bbb-home-gateway-0.2.0.swu` vào → quan sát progress bar.
+Trên BBB, chạy downloader một lần với URL `.swu`:
+
+```bash
+09-swupdate-args http://192.168.137.1:8000/release/update-image-bbb-home-gateway-0.2.0.swu
+```
 
 ---
 
 ## 4. Theo dõi quá trình flash
 
-### 4.1. Trên web UI
+### 4.1. Trên app hoặc progress socket
 
 Progress đi qua các giai đoạn:
-- `Uploading` — file đang được POST lên board
-- `Verifying` — SWUpdate parse `sw-description`, check hardware-compatibility
-- `Downloading` (về phần `.swu` đang được stream từ HTTP request)
+- `Downloading` — SWUpdate tự tải `.swu` từ URL
+- `Verifying` — SWUpdate parse `sw-description`, check hardware-compatibility, verify CMS signature và hash nếu `secure-boot` bật
 - `Installing` — flash raw vào partition đích
-- `Success` — postinst đã chạy, sẽ reboot
+- `Success` — postinst đã chạy, app hoặc người dùng quyết định reboot
 
 ### 4.2. Trên serial console hoặc SSH
 
 Theo dõi log SWUpdate:
 
 ```bash
-journalctl -u swupdate -f
+journalctl -t swupdate -f
 ```
 
 Sẽ thấy:
@@ -132,6 +130,12 @@ fw_printenv active_slot ustate boot_count
 # boot_count=0
 ```
 
+Vì `reboot-required = false`, SWUpdate không tự reboot. Reboot bằng nút **Reboot now** của app hoặc chạy:
+
+```bash
+reboot
+```
+
 ---
 
 ## 5. Quan sát U-Boot bootscript
@@ -143,7 +147,7 @@ Trên serial console khi board reboot, U-Boot log:
 >>> OTA: loading kernel from slot B (mmcblk0p2)
 ```
 
-`boot_count` được tăng lên 1 (vì `ustate=1`). Kernel load từ `/boot` (chung cho cả 2 slot), `bootargs` set `root=/dev/mmcblk0p2` (slot B).
+`boot_count` được tăng lên 1 (vì `ustate=1`). U-Boot load kernel/dtb từ `/boot` trong rootfs của slot active, `bootargs` set `root=/dev/mmcblk0p2` (slot B).
 
 ---
 
@@ -199,7 +203,7 @@ broken_init() {
 ROOTFS_POSTPROCESS_COMMAND:append:pn-core-image-home-gateway = " broken_init; "
 ```
 
-Build `update-image`, upload, đợi reboot.
+Build `update-image`, cài qua downloader, rồi reboot để boot thử slot mới.
 
 ### 7.2. Quan sát rollback
 
@@ -256,16 +260,28 @@ cat /etc/hwrevision
 
 Phải khớp dòng `hardware-compatibility: [ "1.0" ]` trong [sw-description.in](../../meta-ota/recipes-extended/images/beaglebone/sw-description.in).
 
-### 8.2. Update thành công nhưng board không reboot
+### 8.2. SWUpdate báo lỗi signature hoặc hash
 
-Check `reboot-required = true` trong [swupdate.cfg](../../meta-ota/recipes-support/swupdate/files/swupdate.cfg.in). Hoặc reboot thủ công:
+Khi `secure-boot` bật, `.swu` phải được ký bằng private key tương ứng với certificate trong `/etc/swupdate/swupdate.pem`, và payload phải khớp SHA256 trong `sw-description`. Check:
 
 ```bash
-fw_printenv ustate    # confirm = 1 (đã sẵn sàng)
+journalctl -t swupdate -n 100
+grep public-key-file /etc/swupdate.cfg
+ls -l /etc/swupdate/swupdate.pem
+```
+
+Nếu file `.swu` bị copy lỗi, bị sửa sau khi build, hoặc build bằng key khác với image đang chạy trên board, SWUpdate sẽ abort trước khi ghi slot inactive.
+
+### 8.3. Update thành công nhưng board không reboot
+
+Thiết kế hiện tại đặt `reboot-required = false` trong [swupdate.cfg](../../meta-ota/recipes-support/swupdate/files/swupdate.cfg.in), để Qt app điều khiển thời điểm reboot. Có thể reboot thủ công:
+
+```bash
+fw_printenv ustate    # ustate=1 nghĩa là update đã sẵn sàng boot thử
 reboot
 ```
 
-### 8.3. Sau update, vẫn boot vào slot cũ
+### 8.4. Sau update, vẫn boot vào slot cũ
 
 Check env có thực sự đổi không:
 
@@ -273,9 +289,9 @@ Check env có thực sự đổi không:
 fw_printenv active_slot ustate
 ```
 
-Nếu `active_slot` chưa đổi -> `switch-slot.sh` đã không chạy -> kiểm tra `journalctl -u swupdate` xem postinst có error.
+Nếu `active_slot` chưa đổi -> `switch-slot.sh` đã không chạy -> kiểm tra `journalctl -t swupdate` xem postinst có error.
 
-### 8.4. Board lặp lại retry forever, không rollback
+### 8.5. Board lặp lại retry forever, không rollback
 
 `boot_count` không tăng được — thường là vì `saveenv` fail (env partition write-protect / corrupt). Check trong U-Boot console:
 
@@ -294,29 +310,12 @@ sudo dd if=u-boot-env.raw of=/dev/sdX seek=$((0x260000 / 512)) bs=512
 
 ---
 
-## 9. Tự động hóa upload (CLI thay vì web UI)
+## 9. Cài bằng CLI
 
-SWUpdate webserver chấp nhận POST file trực tiếp. Dùng `curl` trên build host:
-
-```bash
-curl -F "file=@update-image-bbb-home-gateway.swu" \
-     http://<board-ip>:8080/upload
-```
-
-Hoặc một script wrapper:
+Luồng hiện tại không cần web UI upload. Chỉ cần URL HTTP tới `.swu`:
 
 ```bash
-#!/bin/bash
-set -eu
-BOARD_IP="${1:-192.168.1.100}"
-SWU_FILE="${2:-update-image-bbb-home-gateway.swu}"
-
-echo "Uploading ${SWU_FILE} to ${BOARD_IP}..."
-curl -F "file=@${SWU_FILE}" "http://${BOARD_IP}:8080/upload"
-echo "Waiting for board to reboot..."
-sleep 5
-until ping -c 1 -W 1 "${BOARD_IP}" >/dev/null 2>&1; do
-    sleep 2
-done
-echo "Board is back online."
+09-swupdate-args http://<host-ip>:8000/release/update-image-bbb-home-gateway.swu
 ```
+
+Hoặc từ Qt app, bấm **Update now** để app gọi cùng downloader script và theo dõi progress qua `/tmp/swupdateprog`.
