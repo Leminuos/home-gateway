@@ -9,6 +9,7 @@ globals :
     loglevel = 5;
     syslog   = true;
     reboot-required = false;
+@PUBLIC_KEY_LINE@
 };
 
 download :

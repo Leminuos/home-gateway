@@ -14,12 +14,14 @@ software =
                         device             = "/dev/mmcblk0p1";
                         type               = "raw";
                         compressed         = "zlib";
+                        sha256             = "$swupdate_get_sha256(@IMAGE_NAME@)";
                     }
                 );
                 scripts: (
                     {
                         filename = "switch-slot.sh";
                         type     = "shellscript";
+                        sha256   = "$swupdate_get_sha256(switch-slot.sh)";
                     }
                 );
             };
@@ -31,12 +33,14 @@ software =
                         device             = "/dev/mmcblk0p2";
                         type               = "raw";
                         compressed         = "zlib";
+                        sha256             = "$swupdate_get_sha256(@IMAGE_NAME@)";
                     }
                 );
                 scripts: (
                     {
                         filename = "switch-slot.sh";
                         type     = "shellscript";
+                        sha256   = "$swupdate_get_sha256(switch-slot.sh)";
                     }
                 );
             };

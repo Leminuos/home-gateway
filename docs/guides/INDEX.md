@@ -7,7 +7,7 @@ Hướng dẫn từng bước làm một việc cụ thể ("làm sao để Y?")
 | File | Nội dung |
 |---|---|
 | [01-build-and-flash.md](01-build-and-flash.md) | Build image lần đầu và flash SD card cho BeagleBone Black |
-| [02-ota-update-workflow.md](02-ota-update-workflow.md) | Chạy 1 chu trình OTA end-to-end: build `.swu`, upload qua web UI, verify commit/rollback |
+| [02-ota-update-workflow.md](02-ota-update-workflow.md) | Chạy 1 chu trình OTA end-to-end: build `.swu`, cài qua SWUpdate downloader, verify commit/rollback |
 | [03-rootfs-image-optimization-methods.md](03-rootfs-image-optimization-methods.md) | Phương pháp tối ưu rootfs (DISTRO_FEATURES, PACKAGECONFIG, manifest…) |
 | [04-mqtt-broker-tren-host.md](04-mqtt-broker-tren-host.md) | Cài + chạy MQTT broker trên máy host, BBB kết nối qua mạng |
 | [05-tao-screen.md](05-tao-screen.md) | Qt app — các bước tạo một Screen (page) với Qt Widgets + Qt Designer |

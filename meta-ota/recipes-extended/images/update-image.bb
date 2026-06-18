@@ -26,6 +26,12 @@ SWUPDATE_IMAGES = "core-image-home-gateway"
 
 SWUPDATE_IMAGES_FSTYPES[core-image-home-gateway] = ".ext4.gz"
 
+# Ký sw-description bằng CMS/X.509 khi secure-boot bật. Dùng lại cặp key RSA
+# của Verified Boot (sinh bởi FIT_GENERATE_KEYS vào ${TOPDIR}/keys).
+SWUPDATE_SIGNING = "${@bb.utils.contains('DISTRO_FEATURES', 'secure-boot', 'CMS', '', d)}"
+SWUPDATE_CMS_KEY  = "${TOPDIR}/keys/dev.key"
+SWUPDATE_CMS_CERT = "${TOPDIR}/keys/dev.crt"
+
 do_render_swdesc() {
     image_name="core-image-home-gateway-${MACHINE}.ext4.gz"
 

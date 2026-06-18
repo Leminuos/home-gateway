@@ -4,7 +4,7 @@
 
 - Thiết bị có **2 slot hệ thống giống nhau**: `A` và `B`, mỗi slot là một bản hệ điều hành đầy đủ.
 - Tại một thời điểm chỉ **một slot active** (đang chạy); slot kia **inactive** (dự phòng).
-- Khi update: ghi firmware mới vào **slot inactive**, rồi chuyển sang boot slot đó. Slot đang chạy **không bị đụng tới**.
+- Khi update: SWUpdate xác minh metadata/payload của firmware, ghi firmware hợp lệ vào **slot inactive**, rồi chuyển sang boot slot đó. Slot đang chạy **không bị đụng tới**.
 - Nếu slot mới boot fail → **rollback**: quay lại slot cũ vẫn còn nguyên vẹn.
 
 > Mục tiêu: update không bao giờ làm "chết" thiết bị — luôn có một slot tốt để quay về.
@@ -34,6 +34,9 @@
 
 ```
    firmware mới
+        │ verify sw-description/signature + hash payload
+        ▼
+   firmware hợp lệ
         │ ghi vào SLOT INACTIVE
         ▼
    đánh dấu: slot active = slot mới, cờ "đang thử" = bật
@@ -83,9 +86,14 @@
 - Slot mới boot lên nhưng **không tự xác nhận** (service then chốt không chạy) → cờ "đang thử" vẫn còn → lần boot sau lại đếm tiếp → cuối cùng rollback.
 - Điểm mấu chốt: **chỉ khi bản mới tự chứng minh là tốt** thì cờ mới được xóa; nếu không, hệ thống mặc định coi như fail và quay về.
 
+## Quan hệ với ký `.swu`
+
+Rollback A/B xử lý lỗi sau khi firmware đã được chấp nhận và ghi vào slot inactive. Ký `.swu` xử lý lớp trước đó: khi `secure-boot` bật, SWUpdate xác minh chữ ký CMS của `sw-description` bằng certificate được cài trong rootfs và kiểm tra hash SHA256 của từng payload/script trước khi cài. Nếu chữ ký hoặc hash sai, quá trình update dừng trước khi đụng tới slot inactive, nên không cần rollback.
+
 ---
 
 ## Liên quan
 
 - Cách dự án triển khai cụ thể: [meta-ota/README.md](../../meta-ota/README.md)
 - Vì sao A/B cả kernel/dtb chứ không chỉ rootfs: [decisions/01-rootfs-only-vs-full-ab.md](../decisions/01-rootfs-only-vs-full-ab.md)
+- Secure Boot và chữ ký `.swu`: [03-secure-boot.md](03-secure-boot.md)

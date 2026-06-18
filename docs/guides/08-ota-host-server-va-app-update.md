@@ -4,6 +4,7 @@ Hướng dẫn quá trình OTA mới end-to-end: dựng server firmware trên ho
 
 > Cơ chế A/B + rollback không đổi; xem [concepts/01-ota-ab-architecture.md](../concepts/01-ota-ab-architecture.md).
 > Bối cảnh thay đổi: [changes/0005-ota-pull-model-host-server.md](../changes/0005-ota-pull-model-host-server.md).
+> Khi `secure-boot` bật, `.swu` phải được ký CMS/X.509 và SWUpdate sẽ verify chữ ký + hash payload trước khi flash; xem [concepts/03-secure-boot.md](../concepts/03-secure-boot.md).
 
 ---
 
@@ -41,6 +42,8 @@ echo 'OTA_SW_VERSION = "0.2.0"' >> conf/local.conf
 bitbake update-image
 # -> tmp/deploy/images/bbb-home-gateway/update-image-bbb-home-gateway-0.2.0.swu
 ```
+
+Nếu `secure-boot` bật, file `.swu` được ký bằng `${TOPDIR}/keys/dev.key` và target verify bằng certificate đã cài trong `/etc/swupdate/swupdate.pem`. Không sửa/copy lại nội dung bên trong `.swu` sau bước build, vì hash payload trong `sw-description` sẽ không còn khớp.
 
 ### 2.3. Chạy server firmware
 
@@ -111,7 +114,7 @@ cat /etc/sw-versions      # vd: homegateway 0.1.0
 
 2 bước: **Downloading -> Flashing**, rồi **Complete**. App gọi `09-swupdate-args <url>` → spawn `swupdate -d -u <url>` (one-shot); tiến độ đọc qua socket `/tmp/swupdateprog`.
 - **Downloading** — SWUpdate tự `curl` tải `.swu` từ host (%, thật từ `dwl_percent`). Có thể **Cancel**.
-- **Flashing** — SWUpdate parse `sw-description`, check hw-compatible rồi ghi vào slot inactive; % thật từ `cur_percent`. Không cho Cancel (tránh hỏng slot đang ghi).
+- **Flashing** — SWUpdate parse `sw-description`, check hw-compatible, verify chữ ký/hash nếu `secure-boot` bật, rồi ghi vào slot inactive; % thật từ `cur_percent`. Không cho Cancel (tránh hỏng slot đang ghi).
 - **Complete** — hiện *"<version> installed"* + nút **Reboot now**.
 
 Theo dõi phía board trong lúc cài:
@@ -144,6 +147,7 @@ Trên màn Settings, version firmware hiển thị cũng là version mới.
 | Manual check báo *Check failed* | `curl http://<host>:8000/manifest.json` từ board được không? đúng `OTA_MANIFEST_URL`? |
 | Auto không popup | `mosquitto_sub -h <host> -t ota/latest -C 1` có manifest? toggle đang Automatic? version có cao hơn không? |
 | Tải xong báo *Sai sha256* | File trên server hỏng hoặc manifest cũ — server tự tính lại sha256 mỗi lần file đổi, thử restart server |
+| SWUpdate báo lỗi signature/hash | `.swu` không được ký đúng key, target thiếu `/etc/swupdate/swupdate.pem`, hoặc payload trong archive đã bị sửa sau khi build; xem `journalctl -t swupdate -n 100` |
 | Downloading/Flashing đứng ở 0% | `journalctl -t swupdate -f` (swupdate one-shot log qua syslog) xem có tải/ghi không; thử `09-swupdate-args <url>` thủ công trên board để xem lỗi trực tiếp |
 | *Update failed* | Lý do hiển thị trên màn; chi tiết ở `journalctl -t swupdate` (vd hardware mismatch, URL không tải được) |
 | Flash xong không vào slot mới | `fw_printenv active_slot ustate` — `switch-slot.sh` có chạy? |

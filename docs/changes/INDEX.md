@@ -21,6 +21,7 @@ Log các thay đổi lớn kèm giải thích ("cái gì đã thay đổi và v�
 | [0013-sensor-csv-logging.md](0013-sensor-csv-logging.md) | Log số liệu cảm biến (nhiệt độ/độ ẩm/ánh sáng) ra CSV trên /data qua class SensorLogger |
 | [0014-bottom-nav-and-chart-dashboard.md](0014-bottom-nav-and-chart-dashboard.md) | Bottom navigation bar (Home/Dashboard/Settings) + màn Dashboard chart Qt Charts có chọn khoảng thời gian; mở rộng SensorLogger làm nguồn lịch sử |
 | [0015-logger-system.md](0015-logger-system.md) | Lưu log persistent |
+| [0016-ota-swu-signing.md](0016-ota-swu-signing.md) | Sign & verify chữ ký `.swu` (CMS/X.509) |
 
 ## Phân nhóm theo chủ đề
 
@@ -34,6 +35,7 @@ Log các thay đổi lớn kèm giải thích ("cái gì đã thay đổi và v�
 - [0008-fix-fitimage-dtb-config.md](0008-fix-fitimage-dtb-config.md)
 - [0012-ota-swupdate-downloader.md](0012-ota-swupdate-downloader.md)
 - [0015-logger-system.md](0015-logger-system.md)
+- [0016-ota-swu-signing.md](0016-ota-swu-signing.md)
 
 ### MQTT / kết nối mạng / config
 
